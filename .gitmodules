@@ -1,0 +1,6 @@
+[submodule "src/submodules/xds-sdk"]
+	path = src/submodules/xds-sdk
+	url = https://github.com/xds-messaging/xds-sdk.git
+[submodule "src/submodules/gui_cs"]
+	path = src/submodules/gui_cs
+	url = https://github.com/migueldeicaza/gui.cs.git

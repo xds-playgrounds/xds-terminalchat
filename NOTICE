@@ -1,0 +1,23 @@
+XDS.TerminalChat is a secure, decentralised and anonymous messaging application for the XDS blockchain.
+
+Copyright (c) 2020 by the original author(s). Licensed for use with the XDS project under the 
+included license (see /blob/master/LICENSE) under consideration and inclusion of this NOTICE. 
+Contributors are welcome. By submitting a contribution in any form, contributors agree to accept
+the terms of the XDS Contributor License Agreement (see /blob/master/CONTRIBUTING) unless
+specified otherwise in a signed formal agreement.
+
+This software has, among others, the folling dependencies:
+
+xds-sdk
+https://github.com/xds-messaging/xds-sdk
+https://github.com/xds-messaging/xds-sdk/blob/master/NOTICE
+https://github.com/xds-messaging/xds-sdk/blob/master/LICENSE
+
+gui.cs
+https://github.com/migueldeicaza/gui.cs
+https://github.com/migueldeicaza/gui.cs/blob/master/README.md
+https://github.com/migueldeicaza/gui.cs/blob/master/LICENSE
+
+dotnet
+https://github.com/dotnet/sdk
+https://github.com/dotnet/sdk/blob/master/LICENSE.TXT

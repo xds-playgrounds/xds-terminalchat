@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>XDS.Messaging.TerminalChat</RootNamespace>
+    <AssemblyName>xdschat</AssemblyName>
+    <AssemblyVersion>1.0.*</AssemblyVersion>
+    <Deterministic>false</Deterministic>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\submodules\gui_cs\Terminal.Gui\Terminal.Gui.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Cryptography.NetStandard\XDS.SDK.Cryptography.NetStandard.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Cryptography\XDS.SDK.Cryptography.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Lib.Bech32\XDS.SDK.Lib.Bech32.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Lib.HDKeys\XDS.SDK.Lib.HDKeys.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Lib.Secp256k1\XDS.SDK.Lib.Secp256k1.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.ApplicationBehavior\XDS.SDK.Messaging.ApplicationBehavior.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.AppSupport\XDS.SDK.Messaging.AppSupport.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.BlockchainClient\XDS.SDK.Messaging.BlockchainClient.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.CrossTierTypes\XDS.SDK.Messaging.CrossTierTypes.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.MessageHostClient\XDS.SDK.Messaging.MessageHostClient.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.Principal\XDS.SDK.Messaging.Principal.csproj" />
+    <ProjectReference Include="..\submodules\xds-sdk\src\XDS.SDK.Messaging.Resources\XDS.SDK.Messaging.Resources.csproj" />
+  </ItemGroup>
+
+</Project>
