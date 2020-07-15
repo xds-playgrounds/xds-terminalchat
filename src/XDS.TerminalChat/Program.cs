@@ -81,7 +81,7 @@ namespace XDS.Messaging.TerminalChat
                 {
                     try
                     {
-                        Task.Delay(5000, _cancellation.ApplicationStopping.Token).Wait();
+                        Task.Delay(5000).Wait(_cancellation.ApplicationStopping.Token);
                         _peerManager.PrintStatus();
                     }
                     catch (Exception e)
