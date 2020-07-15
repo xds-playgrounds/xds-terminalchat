@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using XDS.Messaging.SDK.ApplicationBehavior;
-using XDS.Messaging.SDK.ApplicationBehavior.Models.Chat;
-using XDS.Messaging.SDK.ApplicationBehavior.Models.Serialization;
+using XDS.Messaging.SDK.ApplicationBehavior.Data;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.AppSupport.NetStandard;
@@ -15,7 +14,6 @@ using XDS.SDK.Cryptography.Api.Interfaces;
 using XDS.SDK.Cryptography.NetStandard;
 using XDS.SDK.Messaging.BlockchainClient;
 using XDS.SDK.Messaging.CrossTierTypes;
-using XDS.SDK.Messaging.CrossTierTypes.FStore;
 using XDS.SDK.Messaging.MessageHostClient;
 using XDS.SDK.Messaging.MessageHostClient.Data;
 
@@ -30,13 +28,11 @@ namespace XDS.Messaging.TerminalChat
 
         static void Main(string[] args)
         {
-            InitServices();
+            Configure();
 
             CreateLogger();
 
             _logger.LogInformation("Press 'ESC' to shut down, 'c' to show the chat ui.");
-
-            InitStorage();
 
             StartSearchingForMessageNodes();
 
@@ -60,7 +56,7 @@ namespace XDS.Messaging.TerminalChat
 
                 _logger.LogInformation("ESC was pressed, cancelling...");
                 _cancellation.ApplicationStopping.Cancel();
-                _peerManager.WaitForShutdown().Wait();
+                _peerManager.WaitForShutdownAsync().Wait();
 
                 _logger.LogInformation("Press any key to exit.");
                 Console.ReadKey();
@@ -75,9 +71,9 @@ namespace XDS.Messaging.TerminalChat
         static void StartSearchingForMessageNodes()
         {
             _peerManager = App.ServiceProvider.GetService<PeerManager>();
-            _peerManager.AddSeedNodesIfMissing().Wait();
+            _peerManager.AddSeedNodesIfMissingAsync().Wait();
 
-            Task.Run(_peerManager.Start);
+            Task.Run(_peerManager.StartAsync);
 
             Task.Run(() =>
             {
@@ -97,7 +93,7 @@ namespace XDS.Messaging.TerminalChat
             });
         }
 
-        static void InitServices()
+        static void Configure()
         {
             IServiceCollection serviceCollection = App.CreateServiceCollection();
             AddRequiredServices(serviceCollection);
@@ -111,10 +107,7 @@ namespace XDS.Messaging.TerminalChat
             _cancellation = App.ServiceProvider.GetService<ICancellation>();
         }
 
-        static void InitStorage()
-        {
-            FStoreInitializer.InitFStore();
-        }
+      
 
         static void AddRequiredServices(IServiceCollection services)
         {
@@ -124,11 +117,12 @@ namespace XDS.Messaging.TerminalChat
             services.AddSingleton<ICancellation,Cancellation>();
             services.AddSingleton<PeerManager>();
 
-            var fStoreConfig = FStoreInitializer.FStoreConfig;
-            services.AddSingleton<IAsyncRepository<Profile>>(new FStoreRepository<Profile>(new FStoreMono(fStoreConfig), RepositorySerializer.Serialize, RepositorySerializer.Deserialize<Profile>));
-            services.AddSingleton<IAsyncRepository<Identity>>(new FStoreRepository<Identity>(new FStoreMono(fStoreConfig), RepositorySerializer.Serialize, RepositorySerializer.Deserialize<Identity>));
-            services.AddSingleton<IAsyncRepository<Message>>(new FStoreRepository<Message>(new FStoreMono(fStoreConfig), RepositorySerializer.Serialize, RepositorySerializer.Deserialize<Message>));
-            services.AddSingleton<MessageRelayRecordRepository>(new MessageRelayRecordRepository(fStoreConfig));
+            var fStoreConfig = FStoreInitializer.CreateFStoreConfig();
+            FStoreInitializer.InitFStore(fStoreConfig);
+            services.AddSingleton(fStoreConfig);
+            services.AddSingleton<AppRepository>();
+            services.AddSingleton<MessageRelayRecordRepository>();
+            services.AddSingleton<PeerRepository>();
 
             BootstrapperCommon.RegisterServices(services);
 
@@ -154,7 +148,6 @@ namespace XDS.Messaging.TerminalChat
             {
                 UserAgentName = AssemblyVersionUtil.GetProgramDisplayName(typeof(Program).Assembly),
                 SeedNodes = new[] { "178.62.62.160", "159.65.148.135", "206.189.33.114", "134.122.89.152", "161.35.156.96" },
-                RepositoryConfiguration = FStoreInitializer.FStoreConfig
             };
         }
     }

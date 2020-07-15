@@ -13,7 +13,7 @@ namespace XDS.Messaging.TerminalChat.Services
 
 		public override string CurrentDirectoryName
 		{
-			get { return FStoreInitializer.FStoreConfig.StoreLocation.FullName; }
+			get { return FStoreInitializer.CreateFStoreConfig().StoreLocation.FullName; }
 			set
 			{
 				throw new NotImplementedException();

@@ -10,6 +10,7 @@ using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
 using XDS.Messaging.SDK.ApplicationBehavior.Workers;
 using XDS.SDK.Cryptography.Api.Infrastructure;
+using XDS.SDK.Messaging.BlockchainClient;
 
 namespace XDS.Messaging.TerminalChat.ChatUI
 {
@@ -21,6 +22,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly DeviceVaultService deviceVaultService;
         readonly ProfileViewModel profileViewModel;
         readonly ChatWorker chatWorker;
+        readonly IChatClientConfiguration chatClientConfiguration;
 
         MenuBar menu;
         Window mainWindow;
@@ -39,6 +41,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.deviceVaultService = App.ServiceProvider.Get<DeviceVaultService>();
             this.profileViewModel = App.ServiceProvider.Get<ProfileViewModel>();
             this.chatWorker = App.ServiceProvider.Get<ChatWorker>();
+            this.chatClientConfiguration = App.ServiceProvider.Get<IChatClientConfiguration>();
         }
 
         public override void Create()
@@ -68,7 +71,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 new MenuBarItem ("_File", new[] {
                     new MenuItem ("_Quit", "", StopApplication)
                 }),
-                new MenuBarItem ("_About XDS Chat", "", () =>  MessageBox.Query(50, 7, "XDS Chat", "Version: v. 1.0.0", "Ok"))
+                new MenuBarItem ("_About XDS Terminal Chat", "", () =>  MessageBox.Query(50, 7, " XDS Terminal Chat", this.chatClientConfiguration.UserAgentName, "Ok"))
             });
         }
         void CreateStatusBar()
@@ -88,9 +91,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                         if (MessageBox.ErrorQuery("Self-destruct", "Really...?", "Yes!!!", "Cancel") == 0)
                         {
                             await this.deviceVaultService.DeleteAllData();
-                            if (Directory.Exists(FStoreInitializer.FStoreConfig.StoreLocation.ToString()))
+                            if (Directory.Exists(FStoreInitializer.CreateFStoreConfig().StoreLocation.ToString()))
                             {
-                                Directory.Delete(FStoreInitializer.FStoreConfig.StoreLocation.ToString(),true);
+                                Directory.Delete(FStoreInitializer.CreateFStoreConfig().StoreLocation.ToString(),true);
                             }
                             Environment.Exit(666);
                         }

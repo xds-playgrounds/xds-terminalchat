@@ -40,7 +40,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.mainWindow.RemoveAll();
             this.mainWindow.Title = $"{this.windowTitle}";
             var result = await this.messageBoxService.Show(
-                $"No key file was found in '{FStoreInitializer.FStoreConfig.StoreLocation}' - do you want to create a new XDS Principal?",
+                $"No key file was found in '{FStoreInitializer.CreateFStoreConfig().StoreLocation}' - do you want to create a new XDS Principal?",
                 this.windowTitle, RequestButton.YesNo, RequestImage.None);
             if (result == RequestResult.No)
             {

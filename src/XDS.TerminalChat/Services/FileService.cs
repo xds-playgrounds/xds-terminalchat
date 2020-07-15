@@ -20,7 +20,7 @@ namespace XDS.Messaging.TerminalChat.Services
 
 		public string GetLocalFolderPath()
 		{
-			return FStoreInitializer.FStoreConfig.StoreLocation.FullName;
+			return FStoreInitializer.CreateFStoreConfig().StoreLocation.FullName;
 		}
 
 		public Task<object> LoadAssetImageAsync(string name)
