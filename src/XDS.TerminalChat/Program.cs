@@ -137,7 +137,12 @@ namespace XDS.Messaging.TerminalChat
             services.AddSingleton<IMessageBoxService>(new MessageBoxService());
 
             services.AddSingleton<IFileService,FileService>();
-            services.AddSingleton<ITcpConnection,MessageRelayConnectionFactory>();
+
+            services.AddSingleton<MessageRelayConnectionFactory>();
+            services.AddSingleton<ITcpConnection>(x=> x.GetRequiredService<MessageRelayConnectionFactory>());
+            services.AddSingleton<IMessageRelayAddressReceiver>(x =>
+                x.GetRequiredService<MessageRelayConnectionFactory>());
+
             services.AddSingleton<IUdpConnection,MockUdpConnection>();
             services.AddSingleton<INotificationService,NotificationService>();
         }
