@@ -105,6 +105,21 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                     }
 
                 }),
+                new StatusItem(Key.ControlW, "~^W~ Wallet", () =>
+                {
+                    try
+                    {
+                        var walletView = new WalletView(this.mainWindow);
+                        walletView.OnFinished = DisplayContactsView;
+                        walletView.Create();
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.ErrorQuery($"Could not show wallet", e.Message);
+                        DisplayContactsView();
+                    }
+
+                }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
             });
         }

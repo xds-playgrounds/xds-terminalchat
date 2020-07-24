@@ -152,7 +152,7 @@ namespace XDS.Messaging.TerminalChat
             return new ChatClientConfiguration
             {
                 UserAgentName = AssemblyVersionUtil.GetProgramDisplayName(typeof(Program).Assembly),
-                SeedNodes = new[] { "178.62.62.160", "159.65.148.135", "206.189.33.114", "134.122.89.152", "161.35.156.96" },
+                SeedNodes = new[] { "178.62.62.160", "159.65.148.135", "206.189.33.114", "134.122.89.152", "161.35.156.96", "127.0.0.1" },
             };
         }
     }
