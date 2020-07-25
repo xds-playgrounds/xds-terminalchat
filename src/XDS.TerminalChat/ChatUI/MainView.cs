@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Terminal.Gui;
 using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
@@ -126,15 +127,27 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         void StopApplication()
         {
+            this.Stop();
             Application.RequestStop();
         }
 
-        public override async void Stop()
+        public override void Stop()
         {
             base.Stop();
             this.contactsView?.Stop();
-            await this.chatWorker.StopRunLoopAndDisconnectAll();
-            this.deviceVaultService.ClearMasterRandomKey();
+            try
+            {
+                Task.Run(async () =>
+                {
+                    await this.chatWorker.StopRunLoopAndDisconnectAllAsync().ConfigureAwait(false);
+                    this.deviceVaultService.ClearMasterRandomKey();
+                }).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in {nameof(MainView)}.{MethodBase.GetCurrentMethod().Name}: {e}");
+            }
+
         }
 
         public void UpdateClockInStatusBar()

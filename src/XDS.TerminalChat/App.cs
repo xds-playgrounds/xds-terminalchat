@@ -10,7 +10,6 @@ namespace XDS.Messaging.TerminalChat
     static class App
     {
         public static IServiceProvider ServiceProvider;
-        static MainView _mainView;
         static bool _isUIShowing;
 
         /// <summary>
@@ -24,7 +23,7 @@ namespace XDS.Messaging.TerminalChat
         {
             return new ServiceCollection();
         }
-       
+
         public static IServiceProvider CreateServiceProvider(IServiceCollection serviceCollection)
         {
             IDependencyInjection dependencyInjection = new PortableDependencyInjection(serviceCollection);
@@ -42,8 +41,8 @@ namespace XDS.Messaging.TerminalChat
             Application.Init();
             var topLevel = Application.Top;
 
-            _mainView = new MainView(topLevel);
-            _mainView.Create();
+            var mainView = new MainView(topLevel);
+            mainView.Create();
 
             _isUIShowing = true;
 
@@ -53,7 +52,8 @@ namespace XDS.Messaging.TerminalChat
                 while (_isUIShowing)
                 {
                     await Task.Delay(1000);
-                    _mainView?.UpdateClockInStatusBar();
+                   
+                    mainView.UpdateClockInStatusBar();
                 }
             });
 
@@ -61,7 +61,6 @@ namespace XDS.Messaging.TerminalChat
             Application.Run(topLevel);
 
             _isUIShowing = false;
-            _mainView.Stop();
         }
     }
 }
