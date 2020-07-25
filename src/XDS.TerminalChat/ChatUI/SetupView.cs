@@ -83,10 +83,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 {
                     idGenerationControl.LabelDone.Text = "Complete. Creating your XDS principal...";
 
-                    var entropy64 = this.visualCrypt2Service.CombineRandom64(RandomCapture.GeneratedBytes).Result;
+                    var entropy96 = this.visualCrypt2Service.CombinePseudoRandomWithRandom(RandomCapture.GeneratedBytes, 3 * 32).Result;
 
                     var principalFactory = new PrincipalFactory(this.visualCrypt2Service);
-                    principalFactory.CreateMnemonics(entropy64);
+                    principalFactory.CreateMnemonics(entropy96);
 
                     var principal = principalFactory.GetXDSPrincipal();
 
