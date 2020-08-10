@@ -156,7 +156,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             chatBar.Add(sendButton);
             this.mainWindow.Add(chatBar);
             AsyncMethod.RunSync(this.messagesViewModel.InitializeThread);
-            chatBar.SetFocus(this.textFieldMessageText);
+            this.textFieldMessageText.SetFocus();
             OnViewReady();
             #endregion
         }

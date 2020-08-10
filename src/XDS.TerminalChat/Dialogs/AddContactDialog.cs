@@ -90,7 +90,7 @@ namespace XDS.Messaging.TerminalChat.Dialogs
             dialog.ColorScheme = Application.Top.ColorScheme;
             dialog.Ready = () =>
             {
-                dialog.SetFocus(textFieldName);
+                this.textFieldName.SetFocus();
             };
             Application.Run(dialog);
         }

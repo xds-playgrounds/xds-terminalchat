@@ -149,7 +149,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             }
                
             else 
-                this.window.SetFocus(listView);
+                listView.SetFocus();
         }
 
         async Task InitializeModelAsync()

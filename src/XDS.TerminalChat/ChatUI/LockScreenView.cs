@@ -69,7 +69,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
             buttonOk.Clicked = () => OnAcceptPassphraseAsync(textFieldPassphrase.Text.ToString());
             this.mainWindow.Add(labelWelcome, labelPlease, labelPassphrase, textFieldPassphrase, buttonOk);
-            this.mainWindow.SetFocus(textFieldPassphrase);
+            textFieldPassphrase.SetFocus();
         }
 
 
