@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Terminal.Gui;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
+using XDS.Messaging.TerminalChat.ChatUI;
+using XDS.Messaging.TerminalChat.Dialogs;
 
 namespace XDS.Messaging.TerminalChat.Services
 {
@@ -15,10 +17,10 @@ namespace XDS.Messaging.TerminalChat.Services
 			switch (buttons)
 			{
 				case RequestButton.OK:
-					MessageBox.Query(title, messageBoxText, "Ok");
+					MessageBox.Query(title, messageBoxText, Strings.Ok);
 					return RequestResult.OK;
 				case RequestButton.OKCancel:
-					choice = MessageBox.Query(title, messageBoxText, "Ok","Cancel");
+					choice = MessageBox.Query(title, messageBoxText, Strings.Ok,"Cancel");
 					return choice == 0 ? RequestResult.OK : RequestResult.Cancel;
 				case RequestButton.YesNoCancel:
 					choice = MessageBox.Query(title, messageBoxText, "Yes", "No", "Cancel");
@@ -33,13 +35,13 @@ namespace XDS.Messaging.TerminalChat.Services
 
 		public async Task ShowError(Exception e, [CallerMemberName] string callerMemberName = "")
 		{
-			MessageBox.ErrorQuery("Error", e.Message, "Ok");
-			await Task.CompletedTask;
-		}
+			ErrorBox.ShowException(e);
+            await Task.CompletedTask;
+        }
 
 		public async Task ShowError(string error)
 		{
-			MessageBox.ErrorQuery("Error", error, "Ok");
+            ErrorBox.Show(error);
 			await Task.CompletedTask;
 		}
 	}

@@ -4,6 +4,7 @@ using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
+using XDS.Messaging.TerminalChat.Dialogs;
 using XDS.SDK.Cryptography.Api.Infrastructure;
 
 namespace XDS.Messaging.TerminalChat.ChatUI
@@ -68,7 +69,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             {
                 if (string.IsNullOrWhiteSpace(textViewPassphrase.Text.ToString()))
                 {
-                    MessageBox.ErrorQuery("Error", "The passphrase must not be empty", "OK");
+                    ErrorBox.Show("The passphrase must not be empty");
                 }
                 else
                 {
@@ -77,7 +78,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                             .ValidatedMasterPassphrase);
                     var labelPassphraseAccepted =
                         new Label(
-                            $"Your passphrase was set! Passphrase Quality: {this.deviceVaultService.GetPassphraseQualityText(quality)}")
+                            $"Your passphrase was set! Passphrase Quality: {this.deviceVaultService.GetPassphraseQualityText(quality)}.")
                         {
                             X = Pos.Right(frameViewInfo) + 1,
                             Y = Pos.Bottom(textViewPassphrase) + 1,
@@ -110,17 +111,18 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
                     }, () => { });
 
-                    var success = await this.onboardingViewModel.CommitAll(op.Context);
-                    if (success == true)
+                    try
                     {
+                        await this.onboardingViewModel.CommitAllAsync(op.Context);
                         labelProgressText.Text = "Cryptographic operations complete!";
 
-                        this.mainWindow.Add(new Label("That's it! You can now start chatting with your new encrypted identity!")
-                        {
-                            X = Pos.Right(frameViewInfo) + 1,
-                            Y = Pos.Bottom(labelProgressText) + 1,
-                            Width = Dim.Fill()
-                        });
+                        this.mainWindow.Add(
+                            new Label("That's it! You can now start chatting with your new encrypted identity!")
+                            {
+                                X = Pos.Right(frameViewInfo) + 1,
+                                Y = Pos.Bottom(labelProgressText) + 1,
+                                Width = Dim.Fill()
+                            });
 
                         this.mainWindow.Add(new Button("Start chat")
                         {
@@ -130,7 +132,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
                         });
                     }
-
+                    catch (Exception e)
+                    {
+                        ErrorBox.Show($"Could not commit profile: {e}");
+                    }
                 }
             };
 

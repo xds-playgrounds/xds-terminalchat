@@ -7,6 +7,9 @@ using Terminal.Gui;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
+using XDS.Messaging.TerminalChat.Dialogs;
+using XDS.SDK.Cryptography;
+using XDS.SDK.Messaging.CrossTierTypes;
 using XDS.SDK.Messaging.CrossTierTypes.Photon;
 
 namespace XDS.Messaging.TerminalChat.ChatUI
@@ -14,12 +17,11 @@ namespace XDS.Messaging.TerminalChat.ChatUI
     public class ContactsView : ConsoleViewBase
     {
         readonly ContactListManager contactListManager;
-        readonly ContactsViewModel contactsViewModel;
+
         readonly IMessageBoxService messageBoxService;
         readonly ProfileViewModel profileViewModel;
         readonly PhotonWalletManager photonWalletManager;
 
-        readonly Action switchToChatWithCurrentContact;
 
         Label contactsCountLabel;
         Label walletLabel;
@@ -28,13 +30,12 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         readonly Window window;
 
-        public ContactsView(Window mainWindow, Action switchToChatWithCurrentContact) : base(mainWindow)
+        public ContactsView(Window mainWindow) : base(mainWindow)
         {
             this.window = mainWindow;
-            this.switchToChatWithCurrentContact = switchToChatWithCurrentContact;
 
             this.contactListManager = App.ServiceProvider.Get<ContactListManager>();
-            this.contactsViewModel = App.ServiceProvider.Get<ContactsViewModel>();
+
             this.messageBoxService = App.ServiceProvider.Get<IMessageBoxService>();
             this.photonWalletManager = App.ServiceProvider.Get<PhotonWalletManager>();
             this.profileViewModel = App.ServiceProvider.Get<ProfileViewModel>();
@@ -58,101 +59,121 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             }
             this.window.RemoveAll();
 
-            this.contactsCountLabel = new Label($"You have {this.contactListManager.Conversations.Count} conversations with {this.contactListManager.Contacts.Count} contacts.");
-           
+            var maxContactNameLength = 0;
+            if (this.contactListManager.Contacts.Any())
+                maxContactNameLength = this.contactListManager.Contacts.Max(x => x.Name.Length);
 
+            var maxNameLength = Math.Max(this.profileViewModel.Name.Length,maxContactNameLength);
+
+            var profile = $"{this.profileViewModel.Name.PadRight(maxNameLength)} | {this.profileViewModel.ChatId.PadRight(14)} | Public Key: {this.profileViewModel.PublicKey.ToHexString()}";
+            
+            var labelYourProfile = new Label("Your Profile:")
+            {
+                X = Style.XLeftMargin,
+                Y = Style.YTopMargin,
+                Width = Dim.Fill()
+            };
+
+            var labelProfile = new Label(profile)
+            {
+                X = Style.XLeftMargin,
+                Y = Pos.Bottom(labelYourProfile)+1,
+                Width = Dim.Fill()
+            };
+
+            var count = this.contactListManager.Contacts.Count;
+
+            var contactsText = "You have added no contacts yet. You can already receive messages with your XDS ID.";
+            if (count == 1)
+                contactsText = "You have 1 contact.";
+            if (count > 1)
+                contactsText = $"You have {count} contacts:";
+
+
+            this.contactsCountLabel = new Label(contactsText)
+            {
+                X = Style.XLeftMargin,
+                Y = Pos.Bottom(labelProfile)+2,
+                Width = Dim.Fill(),
+            };
+
+           
 
             List<string> items = new List<string>();
             foreach (var contact in this.contactListManager.Contacts)
             {
+                var name = contact.Name.PadRight(maxNameLength);
                 var contactId = contact.StaticPublicKey != null ? contact.ChatId : contact.UnverfiedId; // TODO Identity.UnverifiedId also in Android App
-                items.Add(contactId);
+                string description;
+                if (contact.ContactState == ContactState.Valid)
+                    description = $"Public Key: {contact.StaticPublicKey.ToHexString()}";
+                else if (contact.ContactState == ContactState.Added)
+                    description = "Searching the XDS network for this ID's Public Key - Please wait!";
+                else
+                    description = $"Contact State: {contact.ContactState} - something is wrong here...";
+
+                items.Add($"{name} | {contactId.PadRight(14)} | {description}");
             }
-
-
 
             var listView = new ListView(items)
             {
-                X = 0,
+                X = Style.XLeftMargin,
                 Y = Pos.Bottom(this.contactsCountLabel) + 1,
-                Height = Dim.Fill(2),
-                Width = 30
+                Height = Dim.Fill(3),
+                Width = Dim.Fill()
             };
 
             listView.OpenSelectedItem += OnListViewSelected; //(ListViewItemEventArgs e) => lbListView.Text = items[listview.SelectedItem];
-            this.window.Add(this.contactsCountLabel,  listView);
+            this.window.Add(labelYourProfile, labelProfile, this.contactsCountLabel, listView);
 
 
-            var buttonAddContact = new Button("Add Contact")
+            var buttonAddContact = new Button("Add Contact",true)
             {
-                X = 0,
-                Y = Pos.Bottom(listView) + 1
-
+                X = Style.XLeftMargin,
+                Y = Pos.Bottom(listView) + 1,
+                Clicked = () =>
+                {
+                    var addContactDialog = new AddContactDialog();
+                    addContactDialog.ShowModal();
+                    Create(); // refresh to load added contact
+                }
             };
-            buttonAddContact.Clicked = OnButtonAddContactClicked;
             this.window.Add(buttonAddContact);
-            buttonAddContact.FocusFirst();
-            this.window.SetNeedsDisplay();
+
+            if (count == 0)
+            {
+                while (!buttonAddContact.HasFocus)
+                {
+                    this.window.FocusNext();
+                }
+            }
+               
+            else 
+                this.window.SetFocus(listView);
         }
 
         async Task InitializeModelAsync()
         {
             await this.contactListManager.InitFromStore();
             await this.contactListManager.UpdateContacts(); // this would insert the contact twice in the conversations list, investigate
-
-
-
         }
 
         void OnListViewSelected(ListViewItemEventArgs e)
         {
             var key = (string)e.Value;
-
-            var contactForChat = this.contactListManager.Contacts.SingleOrDefault(x => x.StaticPublicKey != null && x.ChatId == key);
+            var chatId = key.Split("|")[1].Trim();
+            var contactForChat = this.contactListManager.Contacts.SingleOrDefault(x => x.StaticPublicKey != null && x.ChatId == chatId);
             if (contactForChat != null)
             {
                 this.contactListManager.CurrentContact = contactForChat;
-                this.switchToChatWithCurrentContact();
+                NavigationService.ShowChatView();
             }
             else
             {
-                MessageBox.Query("Contact without public key.", $"Contact '{key}' is not yet valid for sending messages, because its public key has not yet been retrieved from the network.", "Ok");
+                MessageBox.Query("Contact without public key.", $"Contact '{chatId}' is not yet valid for sending messages, because its public key has not yet been retrieved from the network.", Strings.Ok);
             }
         }
 
 
-        void OnButtonAddContactClicked()
-        {
-            var buttonSave = new Button("Save", true);
-            var buttonCancel = new Button("Cancel") { Clicked = Application.RequestStop };
-            var buttons = new[] { buttonSave, buttonCancel };
-
-            var dialog = new Dialog("Add Contact", 0, 0, buttons);
-
-            dialog.Add(ChatUIViewFactory.CreateAddContactView(buttonSave, OnSaveAddedContactClicked));
-            dialog.Ready = () => OnDialogReady(dialog);
-            Application.Run(dialog);
-        }
-
-        static void OnDialogReady(Dialog dialog)
-        {
-            dialog.ColorScheme = Colors.Dialog;
-            dialog.Subviews[0].FocusLast();
-        }
-
-        async Task OnSaveAddedContactClicked(string addedContactChatId)
-        {
-
-
-            await this.contactsViewModel.ExecuteSaveAddedContactCommand();
-
-            Application.RequestStop();
-            Create();
-        }
-
-        public override void Stop()
-        {
-            base.Stop();
-        }
     }
 }

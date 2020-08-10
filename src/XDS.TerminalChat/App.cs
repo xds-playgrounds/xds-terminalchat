@@ -36,12 +36,19 @@ namespace XDS.Messaging.TerminalChat
             return ServiceProvider;
         }
 
-        public static void ShowUI()
+        public static void ShowUI(bool isOnboardingRequired)
         {
             Application.Init();
+            
             var topLevel = Application.Top;
+            //topLevel.ColorScheme.Focus = new Terminal.Gui.Attribute(Color.Black,Color.Black);
+            //topLevel.ColorScheme.HotFocus = new Terminal.Gui.Attribute(Color.Black, Color.Black);
+            //topLevel.ColorScheme.Normal = new Terminal.Gui.Attribute(Color.Black, Color.Black);
+            //topLevel.ColorScheme.HotNormal = new Terminal.Gui.Attribute(Color.Black, Color.Black);
+            //topLevel.ColorScheme.Disabled = new Terminal.Gui.Attribute(Color.Black, Color.Black);
 
             var mainView = new MainView(topLevel);
+            mainView.IsOnboardingRequired = isOnboardingRequired;
             mainView.Create();
 
             _isUIShowing = true;
@@ -53,12 +60,13 @@ namespace XDS.Messaging.TerminalChat
                 {
                     await Task.Delay(1000);
                    
-                    mainView.UpdateClockInStatusBar();
+                    NavigationService.UpdateClockInStatusBar();
                 }
             });
 
             // this will block
             Application.Run(topLevel);
+            Application.Shutdown();
 
             _isUIShowing = false;
         }

@@ -1,16 +1,8 @@
 ﻿using System;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using Terminal.Gui;
-using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
-using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
 using XDS.Messaging.SDK.ApplicationBehavior.Workers;
-using XDS.SDK.Cryptography.Api.Infrastructure;
 using XDS.SDK.Messaging.BlockchainClient;
 
 namespace XDS.Messaging.TerminalChat.ChatUI
@@ -19,11 +11,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
     {
         readonly Toplevel topLevel;
 
-        readonly IDispatcher dispatcher;
-        readonly DeviceVaultService deviceVaultService;
-        readonly ProfileViewModel profileViewModel;
-        readonly ChatWorker chatWorker;
         readonly IChatClientConfiguration chatClientConfiguration;
+        readonly ICancellation cancellation;
+        public readonly ColorScheme colorScheme;
 
         MenuBar menu;
         Window mainWindow;
@@ -34,15 +24,17 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         Action onBackPress;
 
+        public bool IsOnboardingRequired { get; internal set; }
+
         public MainView(Toplevel topLevel) : base(topLevel)
         {
             this.topLevel = topLevel;
 
-            this.dispatcher = App.ServiceProvider.Get<IDispatcher>();
-            this.deviceVaultService = App.ServiceProvider.Get<DeviceVaultService>();
-            this.profileViewModel = App.ServiceProvider.Get<ProfileViewModel>();
-            this.chatWorker = App.ServiceProvider.Get<ChatWorker>();
+            this.colorScheme = Theme.CreateColorScheme();
+            this.topLevel.ColorScheme = this.colorScheme;
+
             this.chatClientConfiguration = App.ServiceProvider.Get<IChatClientConfiguration>();
+            this.cancellation = App.ServiceProvider.Get<ICancellation>();
         }
 
         public override void Create()
@@ -50,19 +42,23 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             CreateMainWindow();
             CreateMenu();
             CreateStatusBar();
-
             this.topLevel.Add(this.menu, this.mainWindow, this.statusBar);
 
+            NavigationService.Init(this.mainWindow, this.statusBar, this.menu);
+
+            HotKeys.OnQuitPressed = Quit;
+            HotKeys.OnKillPressed = SelfDestruct;
         }
 
         public void CreateMainWindow()
         {
-            this.mainWindow = new Window(ChatUIViewFactory.WindowTitleLocked)
+            this.mainWindow = new Window(Strings.WindowTitle)
             {
                 X = 0,
                 Y = 1, // leave one row for the menu
                 Width = Dim.Fill(),
-                Height = Dim.Fill()
+                Height = Dim.Fill(),
+                ColorScheme = this.colorScheme
             };
         }
 
@@ -70,111 +66,35 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         {
             this.menu = new MenuBar(new[] {
                 new MenuBarItem ("_File", new[] {
-                    new MenuItem ("_Quit", "", StopApplication)
+                    new MenuItem ("_Log", "", ShowLiveLogging),
+                    new MenuItem ("_Quit", "", Quit)
                 }),
-                new MenuBarItem ("_About XDS Terminal Chat", "", () =>  MessageBox.Query(50, 7, " XDS Terminal Chat", this.chatClientConfiguration.UserAgentName, "Ok"))
+                new MenuBarItem ("_About", "", () =>  MessageBox.Query($"About {Strings.WindowTitle}", $"Version: {this.chatClientConfiguration.UserAgentName}", Strings.Ok))
             });
+
+            this.menu.Width = Dim.Fill();
+
+            this.menu.ColorScheme = this.colorScheme;
         }
+
         void CreateStatusBar()
         {
-            this.statusBar = new StatusBar(new[]
-            {
-                //new StatusItem(Key.F1, "~F1~ Help", () => { }),
-                new StatusItem(Key.ControlQ, "~^Q~ Quit", StopApplication),
-                new StatusItem(Key.ControlC, "~^C~ Back", () =>
-                {
-                    this.onBackPress?.Invoke();
-                }),
-                new StatusItem(Key.ControlK, "~^K~ Kill Switch", async () =>
-                {
-                    try
-                    {
-                        if (MessageBox.ErrorQuery("Self-destruct", "Really...?", "Yes!!!", "Cancel") == 0)
-                        {
-                            await this.deviceVaultService.DeleteAllData();
-                            if (Directory.Exists(FStoreInitializer.CreateFStoreConfig().StoreLocation.ToString()))
-                            {
-                                Directory.Delete(FStoreInitializer.CreateFStoreConfig().StoreLocation.ToString(),true);
-                            }
-                            Environment.Exit(666);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.ErrorQuery($"Error in self-destruct sequence", e.Message);
-                        Environment.Exit(1);
-                    }
-
-                }),
-                new StatusItem(Key.ControlW, "~^W~ Wallet", () =>
-                {
-                    try
-                    {
-                        var walletView = new WalletView(this.mainWindow);
-                        walletView.OnFinished = DisplayContactsView;
-                        walletView.Create();
-                    }
-                    catch (Exception e)
-                    {
-                        MessageBox.ErrorQuery($"Could not show wallet", e.Message);
-                        DisplayContactsView();
-                    }
-
-                }),
-                new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
-            });
+            this.statusBar = new StatusBar { ColorScheme = this.colorScheme };
         }
 
-        void StopApplication()
-        {
-            this.Stop();
-            Application.RequestStop();
-        }
 
         public override void Stop()
         {
             base.Stop();
-            this.contactsView?.Stop();
-            try
-            {
-                Task.Run(async () =>
-                {
-                    await this.chatWorker.StopRunLoopAndDisconnectAllAsync().ConfigureAwait(false);
-                    this.deviceVaultService.ClearMasterRandomKey();
-                }).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error in {nameof(MainView)}.{MethodBase.GetCurrentMethod().Name}: {e}");
-            }
-
+            Application.RequestStop();
         }
 
-        public void UpdateClockInStatusBar()
-        {
-            this.dispatcher.Run(() =>
-            {
-                if (this.IsViewReady)
-                {
-                    this.statusBar.Items.Last().Title = GetCurrentUtcDateStringInvariant();
-                    this.statusBar.SetNeedsDisplay();
-                }
-            });
-        }
 
         protected override void OnViewReady()
         {
-            this.mainWindow.Title = ChatUIViewFactory.WindowTitleLocked;
-            this.mainWindow.ColorScheme = Colors.Dialog;
-
-            var isOnboardingRequired = AsyncMethod.RunSync(() => this.deviceVaultService.CheckIfOnboardingRequired());
-
-            if (!isOnboardingRequired)
+            if (!this.IsOnboardingRequired)
             {
-                var unlockView = ChatUIViewFactory.CreateUnlockView(OnAcceptPassphraseAsync);
-
-                this.mainWindow.Add(unlockView);
-                this.mainWindow.FocusFirst();
+                NavigationService.ShowLockScreen();
             }
             else
             {
@@ -190,57 +110,35 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         void OnSetupViewFinished()
         {
             var setMasterPassphraseView = new SetPassphraseView(this.mainWindow);
-            setMasterPassphraseView.OnFinished = OnViewReady;
+            setMasterPassphraseView.OnFinished = () =>
+            {
+                this.IsOnboardingRequired = false;
+                OnViewReady();
+            };
             setMasterPassphraseView.Create();
         }
 
-        async Task OnAcceptPassphraseAsync(string passphrase)
+
+        void ShowLiveLogging()
         {
-            var op = new LongRunningOperation(p => { }, () => { });
-            try
+            MessageBox.Query(Strings.WindowTitle, "Please press 'C' to return to the chat application", Strings.Ok);
+            Stop();
+        }
+
+        void Quit()
+        {
+            this.cancellation.Cancel();
+            Stop();
+        }
+
+        void SelfDestruct()
+        {
+            if (MessageBox.ErrorQuery("Self-destruct", "Are you sure?", "Yes", "Cancel") == 0)
             {
-                this.deviceVaultService.TryLoadDecryptAndSetMasterRandomKey(passphrase, op.Context).ConfigureAwait(false).GetAwaiter().GetResult();
-
-                await this.profileViewModel.LoadProfile();
-                await this.chatWorker.InitAsync();
-                this.chatWorker.StartRunning();
-
-                this.mainWindow.Title = $"Hey {this.profileViewModel.Name}, your chat id is {this.profileViewModel.ChatId} and your address is {this.profileViewModel.DefaultAddress} - unlocked";
-                this.mainWindow.SetNeedsDisplay();
-
-                DisplayContactsView();
-
+                this.cancellation.IsSelfDestructRequested = true;
+                this.cancellation.Cancel();
+                Stop();
             }
-            catch (Exception ex)
-            {
-                var result = MockLocalization.ReplaceKey(ex.Message);
-
-                if (result != ex.Message)
-                {
-                    MessageBox.Query(45, 6, "Device Vault", "\r\nIncorrect Passphrase.", "Ok");
-                }
-                else
-                    MessageBox.ErrorQuery(50, 7, "Error", ex.Message, "Ok");
-            }
-        }
-
-        void DisplayContactsView()
-        {
-            this.contactsView = new ContactsView(this.mainWindow, OnChatContactSelected);
-            this.contactsView.Create();
-        }
-
-        void OnChatContactSelected()
-        {
-            this.chatView = new ChatView(this.mainWindow);
-            this.chatView.OnFinished = DisplayContactsView;
-            this.chatView.Create();
-            this.onBackPress = this.chatView.Stop;
-        }
-
-        static string GetCurrentUtcDateStringInvariant()
-        {
-            return $"{DateTime.UtcNow.ToString(CultureInfo.InvariantCulture)} UTC";
         }
     }
 }

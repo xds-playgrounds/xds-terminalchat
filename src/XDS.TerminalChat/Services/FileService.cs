@@ -8,10 +8,11 @@ namespace XDS.Messaging.TerminalChat.Services
 	{
 
 		readonly byte[] DummyBytes = Guid.NewGuid().ToByteArray();
-
-		public FileService()
-		{
-		}
+        readonly ICancellation cancellation;
+		public FileService(ICancellation cancellation)
+        {
+            this.cancellation = cancellation;
+        }
 
 		public string GetInstallLocation()
 		{
@@ -20,7 +21,7 @@ namespace XDS.Messaging.TerminalChat.Services
 
 		public string GetLocalFolderPath()
 		{
-			return FStoreInitializer.CreateFStoreConfig().StoreLocation.FullName;
+			return this.cancellation.DataDirRoot.FullName;
 		}
 
 		public Task<object> LoadAssetImageAsync(string name)

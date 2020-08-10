@@ -18,9 +18,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly IMessageBoxService messageBoxService;
         readonly Stopwatch stopwatch;
         readonly OnboardingViewModel onboardingViewModel;
-        readonly IXDSSecService visualCrypt2Service;
+        readonly IXDSSecService xdsSecService;
         readonly IChatClientConfiguration chatClientConfiguration;
-        readonly string windowTitle;
+        readonly ICancellation cancellation;
 
         public Action OnFinished;
 
@@ -30,18 +30,21 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.messageBoxService = App.ServiceProvider.Get<IMessageBoxService>();
             this.onboardingViewModel = App.ServiceProvider.Get<OnboardingViewModel>();
             this.stopwatch = new Stopwatch();
-            this.visualCrypt2Service = App.ServiceProvider.Get<IXDSSecService>();
+            this.xdsSecService = App.ServiceProvider.Get<IXDSSecService>();
             this.chatClientConfiguration = App.ServiceProvider.GetService<IChatClientConfiguration>();
-            this.windowTitle = this.chatClientConfiguration.UserAgentName;
+            this.cancellation = App.ServiceProvider.Get<ICancellation>();
         }
 
         public override async void Create()
         {
             this.mainWindow.RemoveAll();
-            this.mainWindow.Title = $"{this.windowTitle}";
-            var result = await this.messageBoxService.Show(
-                $"No key file was found in '{FStoreInitializer.CreateFStoreConfig().StoreLocation}' - do you want to create a new XDS Principal?",
-                this.windowTitle, RequestButton.YesNo, RequestImage.None);
+            this.mainWindow.Title = Strings.WindowTitle;
+            var result = await this.messageBoxService.Show(@$"No encrypted profile found! Do you want to create a new XDS ID?
+
+We were searching in:
+{this.cancellation.DataDirRoot}
+",
+                Strings.WindowTitle, RequestButton.YesNo, RequestImage.None);
             if (result == RequestResult.No)
             {
                 Application.Top.Running = false;
@@ -51,7 +54,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.stopwatch.Reset();
 
             // Demo #1 - Use System.Timer (and threading)
-            var idGenerationControl = new IdGenerationControl("Generate XDS Principal")
+            var idGenerationControl = new IdGenerationControl("Generate XDS ID")
             {
                 Width = Dim.Percent(100),
             };
@@ -81,43 +84,47 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
                 if (RandomCapture.BytesGenerated == RandomCapture.BytesNeeded)
                 {
-                    idGenerationControl.LabelDone.Text = "Complete. Creating your XDS principal...";
+                    idGenerationControl.LabelDone.Text = "Complete. Creating your XDS ID...";
 
-                    var entropy96 = this.visualCrypt2Service.CombinePseudoRandomWithRandom(RandomCapture.GeneratedBytes, 3 * 32).Result;
+                    var entropy96 = this.xdsSecService.CombinePseudoRandomWithRandom(RandomCapture.GeneratedBytes, 3 * 32).Result;
 
-                    var principalFactory = new PrincipalFactory(this.visualCrypt2Service);
+                    var principalFactory = new PrincipalFactory(this.xdsSecService);
                     principalFactory.CreateMnemonics(entropy96);
 
                     var principal = principalFactory.GetXDSPrincipal();
 
                     this.onboardingViewModel.OnboardingGenerateIdentity(principal);
 
-                    await Task.Delay(1000);
-                    idGenerationControl.LabelDone.Text = "Complete. Creating your XDS principal...done.";
-                    idGenerationControl.LabelYourId.Text = $"Your chat ID is: {this.onboardingViewModel.ChatId}";
-                    idGenerationControl.LabelYourAddress.Text = $"Your account address is: {this.onboardingViewModel.DefaultAddress}";
+                    await Task.Delay(600);
+                    idGenerationControl.LabelDone.Text = "Complete. Creating your XDS ID...done.";
+                    idGenerationControl.LabelYourId.Text = $"Your XDS ID: {this.onboardingViewModel.ChatId}";
+                    idGenerationControl.LabelYourAddress.Text = $"Your XDS Receive Address: {this.onboardingViewModel.DefaultAddress}";
                     idGenerationControl.LabelYourId.ColorScheme = Colors.Error;
                     idGenerationControl.LabelYourAddress.ColorScheme = Colors.Error;
 
-                    idGenerationControl.LabelRecovery.Text = "Recovery code:";
-                    var textFieldRecoveryCode = new TextField(principalFactory.MasterSentence)
+                    idGenerationControl.LabelRecovery.Text = "Recovery Sentence:";
+                    var textFieldRecoveryCode = new TextView()
                     {
                         X = idGenerationControl.LabelRecovery.X,
                         Y = idGenerationControl.LabelRecovery.Y + 1,
-                        Width = Dim.Fill()
+                        Width = Dim.Fill(),
+                        Height = 5
                     };
+                    textFieldRecoveryCode.ReadOnly = true;
+                    textFieldRecoveryCode.LayoutStyle = LayoutStyle.Computed;
+                    textFieldRecoveryCode.Text = principalFactory.MasterSentence;
                     idGenerationControl.Add(textFieldRecoveryCode);
 
 
                     var labelYourName =
-                        new Label("Please enter a name for yourself (for display purposes only, only you will see this).")
+                        new Label("Please enter a name for yourself - only you will see this!!!")
                         {
                             X = textFieldRecoveryCode.X,
                             Y = textFieldRecoveryCode.Y + 2,
                         };
                     idGenerationControl.Add(labelYourName);
 
-                    var textFieldName = new TextField("Bob")
+                    var textFieldName = new TextField("Me")
                     {
                         X = labelYourName.X,
                         Y = labelYourName.Y + 2,

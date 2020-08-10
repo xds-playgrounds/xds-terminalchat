@@ -10,45 +10,8 @@ namespace XDS.Messaging.TerminalChat
 {
     public static class FStoreInitializer
     {
-
-        public static FStoreConfig CreateFStoreConfig()
+        public static void EnsureFStore(FStoreConfig fStoreConfig)
         {
-            return new FStoreConfig
-            {
-                DefaultStoreName = "FStore",
-                StoreLocation = GetStoreLocation(),
-                Initializer = InitFStore
-            };
-        }
-
-        static DirectoryInfo GetStoreLocation()
-        {
-            try
-            {
-                //Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "XDSChatData");
-                ProcessModule processModule = System.Diagnostics.Process.GetCurrentProcess().MainModule;
-                if (processModule != null)
-                {
-                    var path = Path.Combine(Path.GetDirectoryName(processModule.FileName), ".xdschatdata");
-                    Console.WriteLine($"Data store location: {path}");
-                    return new DirectoryInfo(path);
-                }
-
-                return new DirectoryInfo(".xdschatdata");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error in GetStoreLocation(): {e.Message}");
-                Environment.Exit(1);
-
-            }
-
-            return null;
-        }
-
-        public static void InitFStore(FStoreConfig fStoreConfig)
-        {
-
             var fStore = new FStoreMono(fStoreConfig);
 
             var profilesTable = new FSTable(nameof(Profile), IdMode.UserGenerated); // Single item, Id does not matter but speeds things up

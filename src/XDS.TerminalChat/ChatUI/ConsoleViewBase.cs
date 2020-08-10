@@ -16,6 +16,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 		protected ConsoleViewBase(Toplevel topLevel)
 		{
 			topLevel.Ready = OnViewReady;
+			topLevel.RemoveAll();
 		}
 
 		/// <summary>

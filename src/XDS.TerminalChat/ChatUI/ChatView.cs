@@ -31,7 +31,6 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         ListView listViewConnections;
         
         bool firstEnterHandled;
-        public Action OnFinished;
 
         public ChatView(Window mainWindow) : base(mainWindow)
         {
@@ -49,8 +48,8 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         public override void Create()
         {
-            this.mainWindow.RemoveAll();
-            this.mainWindow.Title = $"{this.profileViewModel.Name} ({this.profileViewModel.ChatId}) vs. {this.contactListManager.CurrentContact.Name} ({this.contactListManager.CurrentContact.ChatId})";
+          
+            //this.mainWindow.Title = $"{this.profileViewModel.Name} ({this.profileViewModel.ChatId}) vs. {this.contactListManager.CurrentContact.Name} ({this.contactListManager.CurrentContact.ChatId})";
 
             #region chat-view
             var chatViewFrame = new FrameView("Messages")
@@ -157,7 +156,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             chatBar.Add(sendButton);
             this.mainWindow.Add(chatBar);
             AsyncMethod.RunSync(this.messagesViewModel.InitializeThread);
-            chatBar.FocusFirst();
+            chatBar.SetFocus(this.textFieldMessageText);
             OnViewReady();
             #endregion
         }
@@ -208,7 +207,6 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                         });
 
                         await Task.Delay(5000);
-                        //peerManager.PrintStatus();
                     }
                     catch (Exception)
                     {
@@ -219,12 +217,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             });
         }
 
-        public override void Stop()
-        {
-            base.Stop();
-            this.mainWindow.RemoveAll();
-            this.OnFinished();
-        }
+     
 
         async Task SendTextMessageAsync()
         {

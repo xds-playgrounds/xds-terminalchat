@@ -53,7 +53,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.labelHeight = new Label("Block Height:") { Y = Pos.Bottom(this.labelReceiveAddress), Width = Dim.Fill() };
             this.labelHash = new Label("Block Hash:") { Y = Pos.Bottom(this.labelHeight), Width = Dim.Fill() };
 
-            this.labelMessage = new Label("Status: Please press Refresh to sync the wallet.") { Y = Pos.Bottom(this.labelHash) };
+            this.labelMessage = new Label("Status: Please press Refresh to sync the wallet.") { Y = Pos.Bottom(this.labelHash), Width = Dim.Fill()};
             var refreshBalanceButton = new Button("Refresh All") { X = 0, Y = Pos.Bottom(this.labelMessage) + 1, };
             refreshBalanceButton.Clicked = async () =>
             {
