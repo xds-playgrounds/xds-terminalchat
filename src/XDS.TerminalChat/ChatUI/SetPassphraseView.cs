@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Text;
 using Terminal.Gui;
 using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
@@ -15,8 +17,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly IMessageBoxService messageBoxService;
         readonly OnboardingViewModel onboardingViewModel;
         readonly DeviceVaultService deviceVaultService;
-
-        public Action OnFinished;
+        readonly ICancellation cancellation;
 
         public SetPassphraseView(Toplevel topLevel) : base(topLevel)
         {
@@ -24,13 +25,12 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.messageBoxService = App.ServiceProvider.Get<IMessageBoxService>();
             this.onboardingViewModel = App.ServiceProvider.Get<OnboardingViewModel>();
             this.deviceVaultService = App.ServiceProvider.Get<DeviceVaultService>();
+            this.cancellation = App.ServiceProvider.Get<ICancellation>();
         }
 
         public override void Create()
         {
             this.mainWindow.RemoveAll();
-            this.mainWindow.Title = $"Set master passphrase";
-            this.mainWindow.ColorScheme = Colors.Dialog;
 
             var frameViewInfo = new FrameView("Info")
             {
@@ -59,7 +59,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             };
             this.mainWindow.Add(textViewPassphrase);
 
-            var buttonAcceptPassphrase = new Button("Set passphrase")
+            var buttonAcceptPassphrase = new Button("Set passphrase", true)
             {
                 X = Pos.Right(frameViewInfo) + 1,
                 Y = Pos.Bottom(textViewPassphrase) + 1,
@@ -124,13 +124,33 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                                 Width = Dim.Fill()
                             });
 
-                        this.mainWindow.Add(new Button("Start chat")
+                        var exportFilePath = Path.Combine(this.cancellation.DataDirRoot.Parent.ToString(), this.onboardingViewModel.ChatId + ".txt");
+
+                        var choice = MessageBox.ErrorQuery("Cleartext Export",
+                            $"Export your XDS ID, XDS Address and Recovery Sentence? Path: {exportFilePath}", "YES", "NO");
+                        if (choice == 0)
+                        {
+                            var sb = new StringBuilder();
+                            sb.AppendLine($"XDS ID={this.onboardingViewModel.ChatId}");
+                            sb.AppendLine($"XDS Address={this.onboardingViewModel.DefaultAddress}");
+                            sb.AppendLine($"Recovery Sentence={this.onboardingViewModel.MasterSentence}");
+                            File.WriteAllText(exportFilePath,sb.ToString());
+                        }
+
+                        var buttonStartChat = new Button("Start chat")
                         {
                             X = Pos.Right(frameViewInfo) + 1,
                             Y = Pos.Bottom(labelProgressText) + 3,
-                            Clicked = Stop
+                            Clicked = () =>
+                            {
 
-                        });
+                                App.IsOnboardingRequired = false;
+                                NavigationService.ShowLockScreen();
+                            }
+                        };
+
+                        this.mainWindow.Add(buttonStartChat);
+                        buttonStartChat.SetFocus();
                     }
                     catch (Exception e)
                     {
@@ -141,15 +161,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
             this.mainWindow.Add(buttonAcceptPassphrase);
 
-            this.mainWindow.FocusFirst();
-            this.mainWindow.SetNeedsDisplay();
+
+            textViewPassphrase.SetFocus();
         }
 
-        public override void Stop()
-        {
-            base.Stop();
-            this.mainWindow.RemoveAll();
-            this.OnFinished();
-        }
     }
 }

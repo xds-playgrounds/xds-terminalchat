@@ -45,9 +45,9 @@ namespace XDS.Messaging.TerminalChat
                     _cancellation.Cancel();
                 };
 
-                var isOnboardingRequired = await _cancellation.PrepareLaunch(dataDirRoot);
+                App.IsOnboardingRequired = await _cancellation.PrepareLaunch(dataDirRoot);
 
-                App.ShowUI(isOnboardingRequired);
+                App.ShowUI();
 
                 while (!_cancellation.Token.IsCancellationRequested)
                 {
@@ -55,7 +55,7 @@ namespace XDS.Messaging.TerminalChat
                     var key = Console.ReadKey(true);
                     if (key.KeyChar == 'c' || key.KeyChar == 'C')
                     {
-                        App.ShowUI(false);
+                        App.ShowUI();
                     }
                 }
             }

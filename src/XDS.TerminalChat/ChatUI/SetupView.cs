@@ -93,7 +93,7 @@ We were searching in:
 
                     var principal = principalFactory.GetXDSPrincipal();
 
-                    this.onboardingViewModel.OnboardingGenerateIdentity(principal);
+                    this.onboardingViewModel.OnboardingGenerateIdentity(principal, principalFactory.MasterSentence);
 
                     await Task.Delay(600);
                     idGenerationControl.LabelDone.Text = "Complete. Creating your XDS ID...done.";
@@ -133,23 +133,29 @@ We were searching in:
                     };
                     idGenerationControl.Add(textFieldName);
 
-                    idGenerationControl.Add(new Button("Continue")
+                    var buttonContinue = new Button("Continue")
                     {
                         X = textFieldName.X,
                         Y = textFieldName.Y + 2,
                         Clicked = () =>
                         {
-                            this.onboardingViewModel.Name = string.IsNullOrWhiteSpace(textFieldName.Text.ToString()) ? "Bob" : textFieldName.Text.ToString();
-                            this.onboardingViewModel.PictureBytes = Guid.NewGuid().ToByteArray(); // pass the checks for null and all-bytes-zero
-                            this.OnFinished();
+                            this.onboardingViewModel.Name = string.IsNullOrWhiteSpace(textFieldName.Text.ToString())
+                                ? "Bob"
+                                : textFieldName.Text.ToString();
+                            this.onboardingViewModel.PictureBytes =
+                                Guid.NewGuid().ToByteArray(); // pass the checks for null and all-bytes-zero
+                            NavigationService.ShowSetPassphraseView();
                         }
-                    });
+                    };
+                    idGenerationControl.Add(buttonContinue);
+                    buttonContinue.SetFocus();
 
                 }
             };
 
 
             this.mainWindow.Add(idGenerationControl);
+            idGenerationControl.EntropyButton.SetFocus();
 
 
         }

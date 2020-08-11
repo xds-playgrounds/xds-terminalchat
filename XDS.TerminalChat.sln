@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Global", "Global", "{E0CD7595-8CFD-46E1-A3C4-A74EAA8B093E}"
 	ProjectSection(SolutionItems) = preProject
 		src\.editorconfig = src\.editorconfig
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{A2EAAA67-A18C-47F8-AB67-D878855C749A}"

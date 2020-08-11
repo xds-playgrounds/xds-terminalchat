@@ -17,6 +17,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         static readonly Stack<Action> History = new Stack<Action>();
 
         static Action _showSelf;
+
         internal static void Init(Window window, StatusBar statusBar, MenuBar menuBar)
         {
             _mainWindow = window;
@@ -26,6 +27,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             HotKeys.OnBackPress = GoBack;
         }
 
+        #region history
 
         static void GoBack()
         {
@@ -44,6 +46,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 History.Push(showSelf);
             _showSelf = showSelf;
         }
+
+        #endregion
+
+        #region app screens
 
         public static void ShowLockScreen()
         {
@@ -83,6 +89,30 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             PushHistory(ShowWalletView);
         }
 
+        #endregion
+
+        #region onboarding screens
+
+        public static void ShowSetupView()
+        {
+            SetMinimumStatusBar();
+
+            var setupView = new SetupView(_mainWindow);
+            setupView.Create();
+        }
+
+        internal static void ShowSetPassphraseView()
+        {
+            SetMinimumStatusBar();
+
+            var setPassphraseView = new SetPassphraseView(_mainWindow);
+            setPassphraseView.Create();
+        }
+
+        #endregion
+
+        #region status bars
+
         static void SetMinimumStatusBar()
         {
             _statusBar.RemoveAll();
@@ -99,9 +129,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             _statusBar.Items = new[]
             {
                 new StatusItem(Key.ControlQ, "~^Q~ Quit", HotKeys.OnQuitPressed),
-                new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
                 new StatusItem(Key.ControlK, "~^K~ Kill Switch", () => { HotKeys.OnKillPressed?.Invoke(); }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
+                new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
             };
         }
 
@@ -111,10 +141,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             _statusBar.Items = new[]
             {
                 new StatusItem(Key.ControlQ, "~^Q~ Quit", HotKeys.OnQuitPressed),
-                new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
                 new StatusItem(Key.ControlK, "~^K~ Kill Switch", () => { HotKeys.OnKillPressed?.Invoke(); }),
                 new StatusItem(Key.ControlW, "~^W~ Wallet", () => { NavigationService.ShowWalletView(); }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
+                new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
             };
         }
 
@@ -129,6 +159,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
             };
         }
+
+        #endregion
+
+        #region clock
 
         static string GetCurrentUtcDateStringInvariant()
         {
@@ -148,5 +182,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 }
             });
         }
+
+       
+
+        #endregion
     }
 }

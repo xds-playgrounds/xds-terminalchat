@@ -10,6 +10,9 @@ namespace XDS.Messaging.TerminalChat
     static class App
     {
         public static IServiceProvider ServiceProvider;
+
+        public static bool IsOnboardingRequired { get; set; }
+
         static bool _isUIShowing;
 
         /// <summary>
@@ -36,7 +39,7 @@ namespace XDS.Messaging.TerminalChat
             return ServiceProvider;
         }
 
-        public static void ShowUI(bool isOnboardingRequired)
+        public static void ShowUI()
         {
             Application.Init();
             
@@ -48,7 +51,6 @@ namespace XDS.Messaging.TerminalChat
             //topLevel.ColorScheme.Disabled = new Terminal.Gui.Attribute(Color.Black, Color.Black);
 
             var mainView = new MainView(topLevel);
-            mainView.IsOnboardingRequired = isOnboardingRequired;
             mainView.Create();
 
             _isUIShowing = true;
@@ -67,6 +69,11 @@ namespace XDS.Messaging.TerminalChat
             // this will block
             Application.Run(topLevel);
             Application.Shutdown();
+
+            if (IsOnboardingRequired)
+            {
+                Environment.Exit(0);
+            }
 
             _isUIShowing = false;
         }

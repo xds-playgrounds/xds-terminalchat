@@ -15,13 +15,11 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         public Label LabelYourId;
         public Label LabelYourAddress;
         public Label LabelRecovery;
-
+        public Button EntropyButton;
 
         internal IdGenerationControl(ustring title) : base(title)
         {
             
-            this.ColorScheme = Colors.Dialog;
-
             this.InfoFrame = new FrameView("Info")
             {
                 X = 0,
@@ -37,7 +35,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
             Add(this.InfoFrame);
 
-            var entropyButton = new Button("Add Entropy")
+           this.EntropyButton = new Button("Add Entropy")
             {
                 X = Pos.Right(this.InfoFrame) + 1,
                 Y = 0,
@@ -45,13 +43,12 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             };
             
 
-            Add(entropyButton);
-            
+            Add(this.EntropyButton);
 
             this.ActivityProgressBar = new ProgressBar
             {
                 X = Pos.Right(this.InfoFrame) + 1,
-                Y = Pos.Bottom(entropyButton) + 1,
+                Y = Pos.Bottom(this.EntropyButton) + 1,
                 Width = Dim.Fill(),
                 Height = 1,
                 Fraction = 0.0f,
