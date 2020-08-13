@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using Terminal.Gui;
 using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
@@ -131,6 +132,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                         if (choice == 0)
                         {
                             var sb = new StringBuilder();
+                            sb.AppendLine("WARNING - THIS FILE CONTAINS SENSITIVE PRIVATE INFORMATION DESCRIBING YOUR XDS ID AND WALLET PRIVATE KEYS.");
+                            sb.AppendLine("Using this information, an attacker can decrypt your messages, impersonate and steal your identity and access the XDS coins in your wallet.");
+                            sb.AppendLine("It's strongly recommended you create your XDS identity on an air-gapped system and keep this information always offline in a safe place. When you do not need your XDS identity any more, you should destroy this information, so that nobody else can pretend to be you.");
+                            sb.AppendLine("====================================");
                             sb.AppendLine($"XDS ID={this.onboardingViewModel.ChatId}");
                             sb.AppendLine($"XDS Address={this.onboardingViewModel.DefaultAddress}");
                             sb.AppendLine($"Recovery Sentence={this.onboardingViewModel.MasterSentence}");
