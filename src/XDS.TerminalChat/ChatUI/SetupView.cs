@@ -124,7 +124,7 @@ We were searching in:
                         };
                     idGenerationControl.Add(labelYourName);
 
-                    var textFieldName = new TextField("Me")
+                    var textFieldName = new TextField("Anonymous")
                     {
                         X = labelYourName.X,
                         Y = labelYourName.Y + 2,
@@ -140,7 +140,7 @@ We were searching in:
                         Clicked = () =>
                         {
                             this.onboardingViewModel.Name = string.IsNullOrWhiteSpace(textFieldName.Text.ToString())
-                                ? "Bob"
+                                ? "Anonymous"
                                 : textFieldName.Text.ToString();
                             this.onboardingViewModel.PictureBytes =
                                 Guid.NewGuid().ToByteArray(); // pass the checks for null and all-bytes-zero

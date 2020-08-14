@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Terminal.Gui;
+using XDS.Messaging.SDK.ApplicationBehavior.Models.Chat;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
@@ -17,12 +19,12 @@ namespace XDS.Messaging.TerminalChat.ChatUI
     public class ContactsView : ConsoleViewBase
     {
         readonly ContactListManager contactListManager;
-
+        readonly ContactsViewModel contactsViewModel;
         readonly IMessageBoxService messageBoxService;
         readonly ProfileViewModel profileViewModel;
         readonly PhotonWalletManager photonWalletManager;
 
-
+        ListView contactsListView;
         Label contactsCountLabel;
         Label walletLabel;
 
@@ -39,10 +41,12 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.messageBoxService = App.ServiceProvider.Get<IMessageBoxService>();
             this.photonWalletManager = App.ServiceProvider.Get<PhotonWalletManager>();
             this.profileViewModel = App.ServiceProvider.Get<ProfileViewModel>();
+            this.contactsViewModel = App.ServiceProvider.Get<ContactsViewModel>();
         }
 
         public override async void Create()
         {
+            UnSubscribe();
             try
             {
                 await InitializeModelAsync();
@@ -63,10 +67,10 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             if (this.contactListManager.Contacts.Any())
                 maxContactNameLength = this.contactListManager.Contacts.Max(x => x.Name.Length);
 
-            var maxNameLength = Math.Max(this.profileViewModel.Name.Length,maxContactNameLength);
+            var maxNameLength = Math.Max(this.profileViewModel.Name.Length, maxContactNameLength);
 
             var profile = $"{this.profileViewModel.Name.PadRight(maxNameLength)} | {this.profileViewModel.ChatId.PadRight(14)} | Public Key: {this.profileViewModel.PublicKey.ToHexString()}";
-            
+
             var labelYourProfile = new Label("Your Profile:")
             {
                 X = Style.XLeftMargin,
@@ -77,7 +81,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             var labelProfile = new Label(profile)
             {
                 X = Style.XLeftMargin,
-                Y = Pos.Bottom(labelYourProfile)+1,
+                Y = Pos.Bottom(labelYourProfile) + 1,
                 Width = Dim.Fill()
             };
 
@@ -93,29 +97,15 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.contactsCountLabel = new Label(contactsText)
             {
                 X = Style.XLeftMargin,
-                Y = Pos.Bottom(labelProfile)+2,
+                Y = Pos.Bottom(labelProfile) + 2,
                 Width = Dim.Fill(),
             };
 
-           
 
-            List<string> items = new List<string>();
-            foreach (var contact in this.contactListManager.Contacts)
-            {
-                var name = contact.Name.PadRight(maxNameLength);
-                var contactId = contact.StaticPublicKey != null ? contact.ChatId : contact.UnverfiedId; // TODO Identity.UnverifiedId also in Android App
-                string description;
-                if (contact.ContactState == ContactState.Valid)
-                    description = $"Public Key: {contact.StaticPublicKey.ToHexString()}";
-                else if (contact.ContactState == ContactState.Added)
-                    description = "Searching the XDS network for this ID's Public Key - Please wait!";
-                else
-                    description = $"Contact State: {contact.ContactState} - something is wrong here...";
 
-                items.Add($"{name} | {contactId.PadRight(14)} | {description}");
-            }
+            List<string> items = CreateListViewItems(maxNameLength, this.contactListManager.Contacts);
 
-            var listView = new ListView(items)
+            this.contactsListView = new ListView(items)
             {
                 X = Style.XLeftMargin,
                 Y = Pos.Bottom(this.contactsCountLabel) + 1,
@@ -123,16 +113,18 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 Width = Dim.Fill()
             };
 
-            listView.OpenSelectedItem += OnListViewSelected; //(ListViewItemEventArgs e) => lbListView.Text = items[listview.SelectedItem];
-            this.window.Add(labelYourProfile, labelProfile, this.contactsCountLabel, listView);
+            this.contactsListView.OpenSelectedItem += OnListViewSelected; //(ListViewItemEventArgs e) => lbListView.Text = items[listview.SelectedItem];
+            this.window.Add(labelYourProfile, labelProfile, this.contactsCountLabel, this.contactsListView);
 
+            this.contactsListView.SelectedItemChanged += OnListViewSelectedChanged;
 
-            var buttonAddContact = new Button("Add Contact",true)
+            var buttonAddContact = new Button("Add Contact", true)
             {
                 X = Style.XLeftMargin,
-                Y = Pos.Bottom(listView) + 1,
+                Y = Pos.Bottom(this.contactsListView) + 1,
                 Clicked = () =>
                 {
+                    UnSubscribe();
                     var addContactDialog = new AddContactDialog();
                     addContactDialog.ShowModal();
                     Create(); // refresh to load added contact
@@ -147,9 +139,60 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                     this.window.FocusNext();
                 }
             }
-               
-            else 
-                listView.SetFocus();
+            else
+            {
+                var buttonEditContact = new Button("Edit Contact")
+                {
+                    X = Pos.Right(buttonAddContact) + 3,
+                    Y = Pos.Bottom(this.contactsListView) + 1,
+                    Clicked = () =>
+                    {
+                        UnSubscribe();
+                        var editContactDialog = new EditContactDialog();
+                        editContactDialog.ShowModal();
+                        Create(); // refresh to load added contact
+                    }
+                };
+                this.window.Add(buttonEditContact);
+
+                var buttonDeleteContact = new Button("Delete Contact")
+                {
+                    X = Pos.Right(buttonEditContact) + 3,
+                    Y = Pos.Bottom(this.contactsListView) + 1,
+                    Clicked = () =>
+                    {
+                        if (MessageBox.Query("Delete Contact", $"Delete {this.contactsViewModel.ContactToEdit.Name} ({this.contactsViewModel.ContactToEdit.ChatId})?", "YES", "NO") == 0)
+                        {
+                            UnSubscribe();
+                            this.contactsViewModel.ExecuteDeleteCommand();
+                            Create(); // refresh to load added contact
+                        }
+                        else
+                        {
+                            return;
+                        }
+                       
+                    }
+                };
+                this.window.Add(buttonDeleteContact);
+                this.contactsListView.SetFocus();
+            }
+
+            var buttonEditProfile = new Button("Edit Profile")
+            {
+                X = Pos.Percent(85),
+                Y = Pos.Bottom(this.contactsListView) + 1,
+                Clicked = () =>
+                {
+                    UnSubscribe();
+                    var addContactDialog = new EditProfileDialog();
+                    addContactDialog.ShowModal();
+                    Create(); // refresh to load added contact
+                }
+            };
+            this.window.Add(buttonEditProfile);
+
+            Subscribe();
         }
 
         async Task InitializeModelAsync()
@@ -165,6 +208,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             var contactForChat = this.contactListManager.Contacts.SingleOrDefault(x => x.StaticPublicKey != null && x.ChatId == chatId);
             if (contactForChat != null)
             {
+                UnSubscribe();
                 this.contactListManager.CurrentContact = contactForChat;
                 NavigationService.ShowChatView();
             }
@@ -174,6 +218,56 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             }
         }
 
+        void UnSubscribe()
+        {
+            this.contactListManager.Contacts.CollectionChanged -= Contacts_CollectionChanged;
+        }
 
+        void Subscribe()
+        {
+            this.contactListManager.Contacts.CollectionChanged += Contacts_CollectionChanged;  
+        }
+
+        void Contacts_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            Application.MainLoop?.Invoke(Create);
+        }
+
+       static List<string> CreateListViewItems(int maxNameLength, IList<Contact> contacts)
+        {
+            List<string> items = new List<string>();
+            foreach (var contact in contacts)
+            {
+                var name = contact.Name.PadRight(maxNameLength);
+                var contactId = contact.StaticPublicKey != null ? contact.ChatId : contact.UnverfiedId; // TODO Identity.UnverifiedId also in Android App
+                string description;
+                if (contact.ContactState == ContactState.Valid)
+                    description = $"Public Key: {contact.StaticPublicKey.ToHexString()}";
+                else if (contact.ContactState == ContactState.Added)
+                    description = "Searching the XDS network for this ID's Public Key - Please wait!";
+                else
+                    description = $"Contact State: {contact.ContactState} - something is wrong here...";
+
+                items.Add($"{name} | {contactId.PadRight(14)} | {description}");
+            }
+
+            return items;
+        }
+
+        void OnListViewSelectedChanged(ListViewItemEventArgs e)
+        {
+            var key = (string)e.Value;
+
+            if(key == default)
+                return;
+
+            var chatId = key.Split("|")[1].Trim();
+            Contact contactToEdit = this.contactListManager.Contacts.SingleOrDefault(x => x.ChatId == chatId);
+            this.contactsViewModel.ContactToEdit = contactToEdit;
+
+            // for deleting
+            this.contactsViewModel.SelectedContacts.Clear();
+            this.contactsViewModel.SelectedContacts.Add(contactToEdit);
+        }
     }
 }
