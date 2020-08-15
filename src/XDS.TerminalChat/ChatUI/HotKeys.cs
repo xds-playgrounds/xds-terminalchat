@@ -14,5 +14,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         public static Action OnQuitPressed { get; internal set; }
 
         public static Action OnKillPressed { get; internal set; }
+
+        public static Action OnOpenFile { get; internal set; }
     }
 }

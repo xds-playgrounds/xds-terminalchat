@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Terminal.Gui;
@@ -7,6 +8,7 @@ using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
+using XDS.Messaging.TerminalChat.Dialogs;
 using XDS.SDK.Messaging.BlockchainClient;
 using XDS.SDK.Messaging.CrossTierTypes;
 using XDS.SDK.Messaging.MessageHostClient;
@@ -29,7 +31,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         TextField textFieldMessageText;
         ListView listViewMessages;
         ListView listViewConnections;
-        
+
         bool firstEnterHandled;
 
         public ChatView(Window mainWindow) : base(mainWindow)
@@ -48,7 +50,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         public override void Create()
         {
-          
+
             //this.mainWindow.Title = $"{this.profileViewModel.Name} ({this.profileViewModel.ChatId}) vs. {this.contactListManager.CurrentContact.Name} ({this.contactListManager.CurrentContact.ChatId})";
 
             #region chat-view
@@ -67,7 +69,8 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 Width = Dim.Fill(),
                 Height = Dim.Fill(),
             };
-            this.messageThreadView.ListView = this.listViewMessages;
+
+            this.messageThreadView.SetListView(this.listViewMessages);
 
             chatViewFrame.Add(this.listViewMessages);
             this.mainWindow.Add(chatViewFrame);
@@ -116,6 +119,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             #endregion
 
             #region chat-bar
+
             var chatBar = new FrameView(null)
             {
                 X = 0,
@@ -157,8 +161,118 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.mainWindow.Add(chatBar);
             AsyncMethod.RunSync(this.messagesViewModel.InitializeThread);
             this.textFieldMessageText.SetFocus();
-            OnViewReady();
+
             #endregion
+
+
+            HotKeys.OnOpenFile = OnOpenFileAsync;
+
+            OnViewReady();
+
+
+        }
+
+
+
+        async void OnOpenFileAsync()
+        {
+            long maxSize = 25 * 1024 * 1024;
+            var openDialog = new OpenDialog("Open", "Open a file") { AllowsMultipleSelection = false, DirectoryPath = GetOpenFileDialogDirectory() };
+
+            Application.Run(openDialog);
+
+            if (openDialog.Canceled)
+                return;
+
+            var fi = new FileInfo(openDialog.FilePath.ToString());
+            if (!fi.Exists)
+                return;
+
+            var fileName = Path.GetFileName(openDialog.FilePath.ToString());
+
+            if (fi.Length > maxSize)
+            {
+                ErrorBox.Show($"File {fileName} has a size of {GetBytesReadable(fi.Length)} but allowed are only {GetBytesReadable(maxSize)}.");
+                return;
+            }
+
+
+            if (MessageBox.Query("Send File?", $"{fileName}, {GetBytesReadable(fi.Length)}", Strings.Ok,
+                Strings.Cancel) == 0)
+            {
+                var fileBytes = File.ReadAllBytes(openDialog.FilePath.ToString());
+                await this.messagesViewModel.SendMessage(MessageType.File,
+                    $"{fileName}, {GetBytesReadable(fi.Length)}", fileBytes);
+                _openFileDialogDirectory = openDialog.DirectoryPath.ToString();
+            }
+
+          
+        }
+
+        static string _openFileDialogDirectory;
+
+        string GetOpenFileDialogDirectory()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_openFileDialogDirectory) && !Directory.Exists(_openFileDialogDirectory))
+                    _openFileDialogDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+                return _openFileDialogDirectory;
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+
+        // Returns the human-readable file size for an arbitrary, 64-bit file size 
+        // The default format is "0.### XB", e.g. "4.2 KB" or "1.434 GB"
+        // Credits: https://www.somacon.com/p576.php
+        public string GetBytesReadable(long i)
+        {
+            // Get absolute value
+            long absolute_i = (i < 0 ? -i : i);
+            // Determine the suffix and readable value
+            string suffix;
+            double readable;
+            if (absolute_i >= 0x1000000000000000) // Exabyte
+            {
+                suffix = "EB";
+                readable = (i >> 50);
+            }
+            else if (absolute_i >= 0x4000000000000) // Petabyte
+            {
+                suffix = "PB";
+                readable = (i >> 40);
+            }
+            else if (absolute_i >= 0x10000000000) // Terabyte
+            {
+                suffix = "TB";
+                readable = (i >> 30);
+            }
+            else if (absolute_i >= 0x40000000) // Gigabyte
+            {
+                suffix = "GB";
+                readable = (i >> 20);
+            }
+            else if (absolute_i >= 0x100000) // Megabyte
+            {
+                suffix = "MB";
+                readable = (i >> 10);
+            }
+            else if (absolute_i >= 0x400) // Kilobyte
+            {
+                suffix = "KB";
+                readable = i;
+            }
+            else
+            {
+                return i.ToString("0 B"); // Byte
+            }
+            // Divide by 1024 to get fractional value
+            readable = (readable / 1024);
+            // Return formatted number with suffix
+            return readable.ToString("0.## ") + suffix;
         }
 
         protected override void OnViewReady()
@@ -189,7 +303,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                                     string info = $"{connection.MessageRelayRecord.IpAddress}";
                                     if (connection.ConnectionState == ConnectedPeer.State.Connected)
                                     {
-                                        info+= $" Bytes in: {connection.BytesReceived}, out: {connection.BytesSent}";
+                                        info += $" Bytes in: {connection.BytesReceived}, out: {connection.BytesSent}";
                                     }
                                     else
                                     {
@@ -217,7 +331,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             });
         }
 
-     
+
 
         async Task SendTextMessageAsync()
         {

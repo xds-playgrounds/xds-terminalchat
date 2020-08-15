@@ -71,7 +71,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         internal static void ShowChatView()
         {
-            SetFullStatusBar();
+            SetChatStatusBar();
 
             var chatView = new ChatView(_mainWindow);
             chatView.Create();
@@ -135,7 +135,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             };
         }
 
-        static void SetFullStatusBar()
+        static void SetChatStatusBar()
         {
             _statusBar.RemoveAll();
             _statusBar.Items = new[]
@@ -145,6 +145,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 new StatusItem(Key.ControlW, "~^W~ Wallet", () => { NavigationService.ShowWalletView(); }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
                 new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
+                new StatusItem(Key.ControlO, "~^O~ Open File", () => { HotKeys.OnOpenFile?.Invoke(); }),
             };
         }
 

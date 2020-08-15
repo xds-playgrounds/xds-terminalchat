@@ -85,10 +85,10 @@ namespace XDS.Messaging.TerminalChat.Services
 
                 foreach (IWorker worker in this.workers)
                 {
-                    if(worker is InfoWorker) // we do not shut down this one, because we want to see the info till the end
+                    if (worker is InfoWorker) // we do not shut down this one, because we want to see the info till the end
                         continue;
 
-                    if(worker.WorkerTask == null) // WorkerTask can be null if InitializeAsync has not been completed
+                    if (worker.WorkerTask == null) // WorkerTask can be null if InitializeAsync has not been completed
                         continue;
 
                     if (worker.WorkerTask.Status > TaskStatus.Created)
@@ -96,7 +96,7 @@ namespace XDS.Messaging.TerminalChat.Services
                         worker.WorkerTask.Wait(500);
                         this.logger.LogInformation($"{worker} {worker.WorkerTask.Status}");
                     }
-                  
+
                 }
                 this.logger.LogInformation($"All running worker tasks have completed.");
 
@@ -108,6 +108,17 @@ namespace XDS.Messaging.TerminalChat.Services
                     this.logger.LogCritical($"Self-destruct initiated...");
                     ExecuteSelfDestruct();
                     this.logger.LogCritical($"Self-destruction complete. All personal information was deleted.");
+                }
+
+
+                try
+                {
+                    var exportdir = Path.Combine(this.DataDirRoot.Parent.FullName, "temp");
+                    Directory.Delete(exportdir, true);
+                }
+                catch (Exception e)
+                {
+                    this.logger.LogError(e.Message);
                 }
 
                 this.logger.LogInformation("Shutdown complete.");
