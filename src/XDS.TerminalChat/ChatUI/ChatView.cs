@@ -28,7 +28,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly Window mainWindow;
         readonly List<string> connectionListEntries;
 
-        TextField textFieldMessageText;
+        TextView textFieldMessageText;
         ListView listViewMessages;
         ListView listViewConnections;
 
@@ -41,7 +41,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.profileViewModel = App.ServiceProvider.Get<ProfileViewModel>();
             this.messageBoxService = App.ServiceProvider.Get<IMessageBoxService>();
 
-            this.messageThreadView = new MessageThreadView(this.profileViewModel.Name, this.contactListManager.CurrentContact.ChatId);
+            this.messageThreadView = new MessageThreadView(this.profileViewModel.Name, this.profileViewModel.ChatId, this.contactListManager.CurrentContact.Name, this.contactListManager.CurrentContact.ChatId);
             this.messagesViewModel = new MessagesViewModel(App.ServiceProvider, this.contactListManager.CurrentContact.Id, this.messageThreadView);
             this.tcpConnection = App.ServiceProvider.Get<ITcpConnection>();
             this.connectionListEntries = new List<string>();
@@ -59,7 +59,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 X = 0,
                 Y = 1,
                 Width = Dim.Percent(75),
-                Height = Dim.Fill() - 3,
+                Height = Dim.Fill() - 5,
             };
 
             this.listViewMessages = new ListView
@@ -125,16 +125,16 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 X = 0,
                 Y = Pos.Bottom(chatViewFrame),
                 Width = chatViewFrame.Width,
-                Height = 3
+                Height = 5
             };
-
-            this.textFieldMessageText = new TextField("")
+           
+            this.textFieldMessageText = new TextView()
             {
                 X = 0,
                 Y = 0,
-                Width = Dim.Percent(75),
-                Height = 1,
-                CanFocus = true
+                Width = Dim.Percent(85),
+                Height = 3,
+                CanFocus = true,
             };
 
             var sendButton = new Button("Send", true)

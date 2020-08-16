@@ -145,7 +145,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 new StatusItem(Key.ControlW, "~^W~ Wallet", () => { NavigationService.ShowWalletView(); }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
                 new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
-                new StatusItem(Key.ControlO, "~^O~ Open File", () => { HotKeys.OnOpenFile?.Invoke(); }),
+                new StatusItem(Key.ControlO, "~^O~ Send File", () => { HotKeys.OnOpenFile?.Invoke(); }),
             };
         }
 

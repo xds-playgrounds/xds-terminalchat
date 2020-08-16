@@ -40,6 +40,8 @@ namespace XDS.Messaging.TerminalChat.Services
         {
             this.DataDirRoot = dataDirRoot;
 
+            ClearTemp();
+
             var isOnboardingRequired = await this.deviceVaultService.CheckIsOnboardingRequiredAsync();
 
             if (isOnboardingRequired)
@@ -110,16 +112,8 @@ namespace XDS.Messaging.TerminalChat.Services
                     this.logger.LogCritical($"Self-destruction complete. All personal information was deleted.");
                 }
 
+                ClearTemp();
 
-                try
-                {
-                    var exportdir = Path.Combine(this.DataDirRoot.Parent.FullName, "temp");
-                    Directory.Delete(exportdir, true);
-                }
-                catch (Exception e)
-                {
-                    this.logger.LogError(e.Message);
-                }
 
                 this.logger.LogInformation("Shutdown complete.");
                 Environment.Exit(0);
@@ -131,6 +125,21 @@ namespace XDS.Messaging.TerminalChat.Services
             }
 
         }
+
+        void ClearTemp()
+        {
+            try
+            {
+                var exportDir = Path.Combine(this.DataDirRoot.Parent.FullName, "temp");
+                if (Directory.Exists(exportDir))
+                    Directory.Delete(exportDir, true);
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError(e.Message);
+            }
+        }
+
 
         void ExecuteSelfDestruct()
         {

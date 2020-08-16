@@ -10,6 +10,7 @@ using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
 using XDS.Messaging.TerminalChat.Dialogs;
 using XDS.SDK.Cryptography.Api.DataTypes;
 using XDS.SDK.Cryptography.Api.Interfaces;
+using XDS.SDK.Messaging.CrossTierTypes;
 
 namespace XDS.Messaging.TerminalChat.ChatUI
 {
@@ -18,16 +19,20 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly IDispatcher dispatcher;
 
         readonly string ownName;
+        readonly string ownId;
         readonly string contactName;
+        readonly string contactId;
 
         ListView ListView { get; set; }
         List<Message> messages;
         readonly List<string> textLines = new List<string>();
 
-        public MessageThreadView(string ownName, string contactName)
+        public MessageThreadView(string ownName, string ownId, string contactName, string contactId)
         {
             this.ownName = ownName;
+            this.ownId = ownId;
             this.contactName = contactName;
+            this.contactId = contactId;
             this.dispatcher = App.ServiceProvider.Get<IDispatcher>();
         }
 
@@ -73,10 +78,12 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
             foreach (Message message in this.messages)
             {
+                var text = TruncateForDisplay(message.ThreadText,60);
+
                 if (message.Side == MessageSide.Me)
-                    this.textLines.Add($"{this.ownName}: {message.ThreadText} ({message.SendMessageState})");
+                    this.textLines.Add($"{this.ownName}: {text} ({message.SendMessageState})");
                 else
-                    this.textLines.Add($"{this.contactName}: {message.ThreadText}");
+                    this.textLines.Add($"{this.contactName}: {text}");
             }
 
             this.dispatcher.Run(() =>
@@ -85,6 +92,23 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 if (this.textLines.Count > 0)
                     this.ListView.SelectedItem = this.textLines.Count - 1;
             });
+        }
+
+        private string TruncateForDisplay(string value, int length)
+        {
+            if (string.IsNullOrEmpty(value)) 
+                return string.Empty;
+
+            value = value.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+
+            var returnValue = value;
+            if (value.Length > length)
+            {
+                var tmp = value.Substring(0, length);
+                if (tmp.LastIndexOf(' ') > 0)
+                    returnValue = tmp.Substring(0, tmp.LastIndexOf(' ')) + " ...";
+            }
+            return returnValue;
         }
 
         Tuple<Message, int> FindMessageToUpdate(Message message)
@@ -106,7 +130,29 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             try
             {
                 var message = this.messages[args.Item];
-                SaveFileToDownloads(message);
+                if (message.MessageType == MessageType.Text)
+                {
+                    var d = new ViewMessageDialog(message,this.ownName,this.ownId,this.contactName,this.contactId);
+                    d.ShowModal();
+                    if (d.Export)
+                    {
+                        var fileName = $"Message-{this.contactId}-{message.Id}.txt";
+                        var appDir = App.ServiceProvider.Get<ICancellation>().DataDirRoot.Parent;
+                        var exportDir = Path.Combine(appDir.FullName, "temp");
+                        if (!Directory.Exists(exportDir))
+                            Directory.CreateDirectory(exportDir);
+                        File.WriteAllText(Path.Combine(exportDir,fileName),message.ThreadText);
+                        MessageBox.Query("Message decrypted",
+                            $"The message was decrypted and saved as {Path.Combine(exportDir, fileName)}. We'll try to delete it when you quit the app!", Strings.Ok);
+                    }
+                    return;
+                }
+
+                if (message.MessageType == MessageType.File)
+                {
+                    SaveFileToDownloads(message);
+                }
+                   
             }
             catch (Exception e)
             {
@@ -129,7 +175,8 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             var decryptionkey = new KeyMaterial64(xdsSec.DefaultDecrypt(message.EncryptedE2EEncryptionKey, xdsSec.SymmetricKeyRepository.GetMasterRandomKey()));
             var plaintextBytes = xdsSec.DefaultDecrypt(message.ImageCipher, decryptionkey);
 
-            File.WriteAllBytes(Path.Combine(exportDir, fileName), plaintextBytes);
+            var pathAndFileName = Path.Combine(exportDir, fileName);
+            File.WriteAllBytes(pathAndFileName, plaintextBytes);
 
 
             MessageBox.Query("File decrypted",
