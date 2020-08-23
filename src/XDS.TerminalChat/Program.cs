@@ -106,7 +106,7 @@ namespace XDS.Messaging.TerminalChat
 
         static void AddRequiredServices(IServiceCollection services, DirectoryInfo dataDirRoot)
         {
-            if (true /*RuntimeInformation.IsOSPlatform(OSPlatform.Windows)*/)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 services.AddLogging(loggingBuilder => { loggingBuilder.AddConsole(); });
             else
                 services.AddLogging(loggingBuilder => { loggingBuilder.ClearProviders(); });
