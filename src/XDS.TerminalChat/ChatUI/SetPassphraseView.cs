@@ -125,22 +125,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                                 Width = Dim.Fill()
                             });
 
-                        var exportFilePath = Path.Combine(this.cancellation.DataDirRoot.Parent.ToString(), this.onboardingViewModel.ChatId + ".txt");
-
-                        var choice = MessageBox.ErrorQuery("Cleartext Export",
-                            $"Export your XDS ID, XDS Address and Recovery Sentence? Path: {exportFilePath}", "YES", "NO");
-                        if (choice == 0)
-                        {
-                            var sb = new StringBuilder();
-                            sb.AppendLine("WARNING - THIS FILE CONTAINS SENSITIVE PRIVATE INFORMATION DESCRIBING YOUR XDS ID AND WALLET PRIVATE KEYS.");
-                            sb.AppendLine("Using this information, an attacker can decrypt your messages, impersonate and steal your identity and access the XDS coins in your wallet.");
-                            sb.AppendLine("It's strongly recommended you create your XDS identity on an air-gapped system and keep this information always offline in a safe place. When you do not need your XDS identity any more, you should destroy this information, so that nobody else can pretend to be you.");
-                            sb.AppendLine("====================================");
-                            sb.AppendLine($"XDS ID={this.onboardingViewModel.ChatId}");
-                            sb.AppendLine($"XDS Address={this.onboardingViewModel.DefaultAddress}");
-                            sb.AppendLine($"Recovery Sentence={this.onboardingViewModel.MasterSentence}");
-                            File.WriteAllText(exportFilePath,sb.ToString());
-                        }
+                       
 
                         var buttonStartChat = new Button("Start chat")
                         {

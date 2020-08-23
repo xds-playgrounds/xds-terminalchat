@@ -11,7 +11,7 @@ namespace XDS.Messaging.TerminalChat.Dialogs
         readonly ProfileViewModel profileViewModel;
 
         TextField textFieldName;
-        Label textFieldId;
+        TextField textFieldId;
         Label labelError;
 
         public EditProfileDialog()
@@ -46,14 +46,15 @@ namespace XDS.Messaging.TerminalChat.Dialogs
             var labelId = new Label("Your XDS ID:")
             {
                 X = Style.XLeftMargin,
-                Y = Pos.Bottom(textFieldName) + 1
+                Y = Pos.Bottom(this.textFieldName) + 1
             };
 
-            this.textFieldId = new Label(this.profileViewModel.ChatId)
+            this.textFieldId = new TextField(this.profileViewModel.ChatId)
             {
                 X = Pos.Right(labelId) + 1,
                 Y = Pos.Top(labelId),
                 Width = 50,
+                ReadOnly = true
             };
 
             this.labelError = new Label("                                       ")
@@ -80,20 +81,15 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 Clicked = Application.RequestStop
             };
 
-            var dialog = new Dialog("Add Contact", 0, 0)
-            {
-                { labelMessage, labelName, this.textFieldName, labelId, this.textFieldId, this.labelError, buttonSave, buttonCancel }
-            };
-            dialog.ColorScheme = Application.Top.ColorScheme;
-            dialog.Ready = () =>
+            this.Dialog.Add(labelMessage, labelName, this.textFieldName, labelId, this.textFieldId, this.labelError, buttonSave, buttonCancel);
+            
+            this.Dialog.Ready = () =>
             {
                 this.textFieldName.SetFocus();
             };
-            Application.Run(dialog);
+
+            Application.Run(this.Dialog);
         }
-
-        
-
 
         async void ValidateNameAsync(bool saveIfValid)
         {

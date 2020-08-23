@@ -12,14 +12,14 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         internal Action OnCaptureEntropyButtonClick = null;
         public Label LabelProgress;
         public Label LabelDone;
-        public Label LabelYourId;
-        public Label LabelYourAddress;
+        public TextField TextFieldYourId;
+        public TextField TextFieldYourAddress;
         public Label LabelRecovery;
         public Button EntropyButton;
 
         internal IdGenerationControl(ustring title) : base(title)
         {
-            
+
             this.InfoFrame = new FrameView("Info")
             {
                 X = 0,
@@ -31,17 +31,17 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             var labelInfoText = new Label(1, 1, "Please press the 'Add Entropy' button in erratic intervals, to enhance the entropy of your private key. This adds safety when your system's RNG is compromised.");
             labelInfoText.LayoutStyle = LayoutStyle.Computed;
             this.InfoFrame.Add(labelInfoText);
-           
+
 
             Add(this.InfoFrame);
 
-           this.EntropyButton = new Button("Add Entropy")
+            this.EntropyButton = new Button("Add Entropy")
             {
                 X = Pos.Right(this.InfoFrame) + 1,
                 Y = 0,
                 Clicked = CaptureEntropy
             };
-            
+
 
             Add(this.EntropyButton);
 
@@ -52,11 +52,11 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 Width = Dim.Fill(),
                 Height = 1,
                 Fraction = 0.0f,
-                ColorScheme = Colors.Error
+                //ColorScheme = Colors.Error
             };
             Add(this.ActivityProgressBar);
 
-           
+
 
             this.LabelProgress = new Label("0 %  ")
             {
@@ -69,34 +69,47 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.LabelDone = new Label("")
             {
                 X = Pos.Right(this.InfoFrame) + 1,
-                Y = Pos.Bottom(this.LabelProgress) +1,
+                Y = Pos.Bottom(this.LabelProgress) + 1,
                 Width = Dim.Fill()
             };
             Add(this.LabelDone);
 
-            this.LabelYourId = new Label("")
+            var labelYourId = new Label("Your XDS ID:")
             {
                 X = Pos.Right(this.InfoFrame) + 1,
                 Y = Pos.Bottom(this.LabelDone) + 2,
-                Width = Dim.Fill()
-
             };
-            Add(this.LabelYourId);
 
-            this.LabelYourAddress= new Label("")
+            this.TextFieldYourId = new TextField("")
             {
                 X = Pos.Right(this.InfoFrame) + 1,
-                Y = Pos.Bottom(this.LabelYourId) + 1,
-                Width = Dim.Fill()
+                Y = Pos.Bottom(labelYourId),
+                Width = 0,
+                ReadOnly = true
+            };
+            Add(labelYourId, this.TextFieldYourId);
+
+            var labelYourAddress = new Label("Your XDS Address: ")
+            {
+                X = Pos.Right(this.InfoFrame) + 1,
+                Y = Pos.Bottom(this.TextFieldYourId) + 1,
+            };
+
+            this.TextFieldYourAddress = new TextField("")
+            {
+                X = Pos.Right(this.InfoFrame) + 1,
+                Y = Pos.Bottom(labelYourAddress),
+                Width = 0,
+                ReadOnly = true
 
             };
-            Add(this.LabelYourAddress);
+            Add(labelYourAddress,this.TextFieldYourAddress);
 
             this.LabelRecovery = new Label("")
             {
                 X = Pos.Right(this.InfoFrame) + 1,
-                Y = Pos.Bottom(this.LabelYourAddress) + 2,
-                Width = Dim.Fill()
+                Y = Pos.Bottom(this.TextFieldYourAddress) + 1,
+                Width = Dim.Fill(),
 
             };
             Add(this.LabelRecovery);

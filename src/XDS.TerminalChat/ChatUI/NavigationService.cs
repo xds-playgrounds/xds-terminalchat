@@ -131,7 +131,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 new StatusItem(Key.ControlQ, "~^Q~ Quit", HotKeys.OnQuitPressed),
                 new StatusItem(Key.ControlK, "~^K~ Kill Switch", () => { HotKeys.OnKillPressed?.Invoke(); }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
-                new StatusItem(Key.ControlC, "~^C~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
+                new StatusItem(Key.ControlB, "~^B~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
             };
         }
 

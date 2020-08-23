@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Terminal.Gui;
+using TextCopy;
 using XDS.Messaging.SDK.ApplicationBehavior.Infrastructure;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
@@ -25,6 +26,8 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly MessageThreadView messageThreadView;
         readonly ITcpConnection tcpConnection;
 
+        readonly IClipboard clipboard;
+
         readonly Window mainWindow;
         readonly List<string> connectionListEntries;
 
@@ -40,6 +43,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             this.contactListManager = App.ServiceProvider.Get<ContactListManager>();
             this.profileViewModel = App.ServiceProvider.Get<ProfileViewModel>();
             this.messageBoxService = App.ServiceProvider.Get<IMessageBoxService>();
+            this.clipboard = App.ServiceProvider.Get<IClipboard>();
 
             this.messageThreadView = new MessageThreadView(this.profileViewModel.Name, this.profileViewModel.ChatId, this.contactListManager.CurrentContact.Name, this.contactListManager.CurrentContact.ChatId);
             this.messagesViewModel = new MessagesViewModel(App.ServiceProvider, this.contactListManager.CurrentContact.Id, this.messageThreadView);

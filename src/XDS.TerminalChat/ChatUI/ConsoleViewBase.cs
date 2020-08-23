@@ -17,7 +17,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 		{
 			topLevel.Ready = OnViewReady;
 			topLevel.RemoveAll();
-		}
+        }
 
 		/// <summary>
 		/// Sets IsViewReady to true.
@@ -40,5 +40,5 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 		{
             this.IsViewReady = false;
 		}
-	}
+    }
 }

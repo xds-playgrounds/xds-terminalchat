@@ -11,7 +11,7 @@ namespace XDS.Messaging.TerminalChat.Dialogs
         readonly ContactsViewModel contactsViewModel;
 
         TextField textFieldName;
-        Label textFieldId;
+        TextField textFieldId;
         Label labelError;
 
         public EditContactDialog()
@@ -21,6 +21,8 @@ namespace XDS.Messaging.TerminalChat.Dialogs
 
         internal void ShowModal()
         {
+            this.Dialog.Title = "Edit Contact";
+
             var labelMessage = new Label("Edit the name of your contact.")
             {
                 X = Style.XLeftMargin,
@@ -49,11 +51,12 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 Y = Pos.Bottom(textFieldName) + 1
             };
 
-            this.textFieldId = new Label(this.contactsViewModel.ContactToEdit.ChatId)
+            this.textFieldId = new TextField(this.contactsViewModel.ContactToEdit.ChatId)
             {
                 X = Pos.Right(labelId) + 1,
                 Y = Pos.Top(labelId),
                 Width = 50,
+                ReadOnly = true
             };
 
             this.labelError = new Label("                                       ")
@@ -80,48 +83,16 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 Clicked = Application.RequestStop
             };
 
-            var dialog = new Dialog("Add Contact", 0, 0)
-            {
-                { labelMessage, labelName, this.textFieldName, labelId, this.textFieldId, this.labelError, buttonSave, buttonCancel }
-            };
-            dialog.ColorScheme = Application.Top.ColorScheme;
-            dialog.Ready = () =>
+            this.Dialog.Add(labelMessage, labelName, this.textFieldName, labelId, this.textFieldId, this.labelError,
+                buttonSave, buttonCancel);
+
+            this.Dialog.Ready = () =>
             {
                 this.textFieldName.SetFocus();
             };
-            Application.Run(dialog);
+          
+            Application.Run(this.Dialog);
         }
-
-        async void ValidateIdAsync(bool saveIfValid)
-        {
-            this.contactsViewModel.AddedContactId = this.textFieldId.Text.ToString();
-            this.contactsViewModel.NewName = this.textFieldName.Text.ToString();
-
-            // call this to populate contactsViewModel.CurrentError
-            bool isValid = this.contactsViewModel.CanExecuteSaveAddedContactCommand();
-
-            this.labelError.Text = this.contactsViewModel.CurrentError;
-            this.labelError.SetNeedsDisplay(this.labelError.Bounds);
-            this.labelError.Redraw(this.labelError.Bounds);
-
-            if (!isValid)
-            {
-                return;
-            }
-            if (!saveIfValid)
-                return;
-
-            try
-            {
-                await this.contactsViewModel.ExecuteSaveAddedContactCommand();
-                Application.RequestStop();
-            }
-            catch (Exception e)
-            {
-                ErrorBox.ShowException(e);
-            }
-        }
-
 
         async void ValidateNameAsync(bool saveIfValid)
         {

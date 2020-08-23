@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TextCopy;
 using XDS.Messaging.SDK.ApplicationBehavior;
 using XDS.Messaging.SDK.ApplicationBehavior.Data;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
@@ -105,6 +106,7 @@ namespace XDS.Messaging.TerminalChat
         {
 
             services.AddLogging(loggingBuilder => { loggingBuilder.AddConsole(); });
+            services.InjectClipboard();
             services.AddSingleton(GetConfiguration());
             services.AddSingleton<ICancellation, Cancellation>();
             services.AddSingleton<PeerManager>();

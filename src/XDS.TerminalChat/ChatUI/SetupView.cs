@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Terminal.Gui;
 using Microsoft.Extensions.DependencyInjection;
@@ -97,27 +99,46 @@ We were searching in:
 
                     await Task.Delay(600);
                     idGenerationControl.LabelDone.Text = "Complete. Creating your XDS ID...done.";
-                    idGenerationControl.LabelYourId.Text = $"Your XDS ID: {this.onboardingViewModel.ChatId}";
-                    idGenerationControl.LabelYourAddress.Text = $"Your XDS Receive Address: {this.onboardingViewModel.DefaultAddress}";
-                    idGenerationControl.LabelYourId.ColorScheme = Colors.Error;
-                    idGenerationControl.LabelYourAddress.ColorScheme = Colors.Error;
+                    idGenerationControl.TextFieldYourId.Text = $"{this.onboardingViewModel.ChatId}";
+                    idGenerationControl.TextFieldYourId.Width = Dim.Fill(); // has zero width, make it visible now
+                    idGenerationControl.TextFieldYourAddress.Text = $"{this.onboardingViewModel.DefaultAddress}";
+                    idGenerationControl.TextFieldYourAddress.Width = Dim.Fill();
+                    idGenerationControl.TextFieldYourId.ReadOnly = true;
+                    idGenerationControl.TextFieldYourAddress.ReadOnly = true;
 
                     idGenerationControl.LabelRecovery.Text = "Recovery Sentence:";
-                    var textFieldRecoveryCode = new TextView()
+
+                    var textFieldRecoveryCode = new TextField
                     {
                         X = idGenerationControl.LabelRecovery.X,
                         Y = idGenerationControl.LabelRecovery.Y + 1,
                         Width = Dim.Fill(),
-                        Height = 5
+                        Height = 5,
                     };
+
                     textFieldRecoveryCode.ReadOnly = true;
                     textFieldRecoveryCode.LayoutStyle = LayoutStyle.Computed;
                     textFieldRecoveryCode.Text = principalFactory.MasterSentence;
                     idGenerationControl.Add(textFieldRecoveryCode);
 
+                    textFieldRecoveryCode.KeyPress += args =>
+                    {
+                        if (!textFieldRecoveryCode.HasFocus)
+                            return;
+
+                        if (args.KeyEvent.Key == Key.ControlA)
+                        {
+                            textFieldRecoveryCode.SelectedStart = 0;
+                            textFieldRecoveryCode.SelectedLength = textFieldRecoveryCode.Text.Length;
+                            textFieldRecoveryCode.SelectedText = principalFactory.MasterSentence;
+                            textFieldRecoveryCode.SetNeedsDisplay(textFieldRecoveryCode.Bounds);
+                            args.Handled = true;
+                        }
+                    };
+
 
                     var labelYourName =
-                        new Label("Please enter a name for yourself - only you will see this!!!")
+                        new Label("Your Name (not visible to others):")
                         {
                             X = textFieldRecoveryCode.X,
                             Y = textFieldRecoveryCode.Y + 2,
@@ -127,7 +148,7 @@ We were searching in:
                     var textFieldName = new TextField("Anonymous")
                     {
                         X = labelYourName.X,
-                        Y = labelYourName.Y + 2,
+                        Y = labelYourName.Y + 1,
                         Width = Dim.Fill()
 
                     };
@@ -136,7 +157,7 @@ We were searching in:
                     var buttonContinue = new Button("Continue")
                     {
                         X = textFieldName.X,
-                        Y = textFieldName.Y + 2,
+                        Y = textFieldName.Y + 3,
                         Clicked = () =>
                         {
                             this.onboardingViewModel.Name = string.IsNullOrWhiteSpace(textFieldName.Text.ToString())
@@ -150,12 +171,49 @@ We were searching in:
                     idGenerationControl.Add(buttonContinue);
                     buttonContinue.SetFocus();
 
+                    var buttonBackup = new Button("Backup")
+                    {
+                        X = Pos.Right(buttonContinue) + Style.SpaceBetweenButtons,
+                        Y = textFieldName.Y + 3,
+                        Clicked = () =>
+                        {
+                            var exportFilePath = Path.Combine(this.cancellation.GetTempDir(true), this.onboardingViewModel.ChatId + ".txt");
+
+                            var choice = MessageBox.ErrorQuery("Cleartext Export",
+                                $"Export your XDS ID, XDS Address and Recovery Sentence? Path: {exportFilePath}", "YES", "NO");
+                            if (choice == 0)
+                            {
+                                var sb = new StringBuilder();
+                                sb.AppendLine("WARNING - THIS FILE CONTAINS SENSITIVE PRIVATE INFORMATION DESCRIBING YOUR XDS ID AND WALLET PRIVATE KEYS.");
+                                sb.AppendLine("Using this information, an attacker can decrypt your messages, impersonate and steal your identity and access the XDS coins in your wallet.");
+                                sb.AppendLine("It's strongly recommended you create your XDS identity on an air-gapped system and keep this information always offline in a safe place. When you do not need your XDS identity any more, you should destroy this information, so that nobody else can pretend to be you.");
+                                sb.AppendLine("====================================");
+                                sb.AppendLine($"XDS ID={this.onboardingViewModel.ChatId}");
+                                sb.AppendLine($"XDS Address={this.onboardingViewModel.DefaultAddress}");
+                                sb.AppendLine($"Recovery Sentence={this.onboardingViewModel.MasterSentence}");
+                                File.WriteAllText(exportFilePath, sb.ToString());
+                            }
+
+                            if (choice == 0)
+                            {
+                                MessageBox.ErrorQuery("Success",
+                                    $"Recovery sentence saved to: {exportFilePath}\nPlease move this file to a safe place (e.g. USB stick).\nWE WILL DELETE THE TEMP DIRECTORY WHEN YOU QUIT THE APP!", "OK");
+                            }
+                        }
+                    };
+                    idGenerationControl.Add(buttonBackup);
+
                 }
             };
 
 
             this.mainWindow.Add(idGenerationControl);
+
+
+
             idGenerationControl.EntropyButton.SetFocus();
+
+
 
 
         }

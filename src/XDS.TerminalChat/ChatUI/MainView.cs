@@ -15,7 +15,6 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         readonly ICancellation cancellation;
         public readonly ColorScheme colorScheme;
 
-        MenuBar menu;
         Window mainWindow;
         StatusBar statusBar;
 
@@ -35,9 +34,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             CreateMainWindow();
             CreateMenu();
             CreateStatusBar();
-            this.topLevel.Add(this.menu, this.mainWindow, this.statusBar);
+            this.topLevel.Add(ClipboardMenu.Menu, this.mainWindow, this.statusBar);
 
-            NavigationService.Init(this.mainWindow, this.statusBar, this.menu);
+            NavigationService.Init(this.mainWindow, this.statusBar, ClipboardMenu.Menu);
 
             HotKeys.OnQuitPressed = Quit;
             HotKeys.OnKillPressed = SelfDestruct;
@@ -50,8 +49,21 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 X = 0,
                 Y = 1, // leave one row for the menu
                 Width = Dim.Fill(),
-                Height = Dim.Fill()-1,
+                Height = Dim.Fill() - 1,
                 ColorScheme = this.colorScheme
+            };
+
+            this.mainWindow.KeyPress += args =>
+            {
+                
+                if (this.mainWindow.MostFocused is TextField textField)
+                {
+                    ClipboardMenu.PerformEdit(args, textField);
+                }
+                else if (this.mainWindow.MostFocused is TextView textView)
+                {
+                    ClipboardMenu.PerformEdit(args, textView);
+                }
             };
         }
 
@@ -59,28 +71,40 @@ namespace XDS.Messaging.TerminalChat.ChatUI
         {
             if (App.IsOnboardingRequired)
             {
-                this.menu = new MenuBar(new[] {
+                ClipboardMenu.Menu = new MenuBar(new[] {
                     new MenuBarItem ("_File", new[] {
                         new MenuItem ("_Quit", "", Quit)
+                    }),
+                    new MenuBarItem ("_Edit", new MenuItem [] {
+                        new MenuItem ("_Copy", "Ctrl+C", ClipboardMenu.Copy),
+                        new MenuItem ("C_ut", "Ctrl+X", ClipboardMenu.Cut),
+                        new MenuItem ("_Paste", "Ctrl+V", ClipboardMenu.Paste),
+                        new MenuItem ("Select _All", "Ctrl+A", ClipboardMenu.SelectAll)
                     }),
                     new MenuBarItem ("_About", "", () =>  MessageBox.Query($"About {Strings.WindowTitle}", $"Version: {this.chatClientConfiguration.UserAgentName}", Strings.Ok))
                 });
             }
             else
             {
-                this.menu = new MenuBar(new[] {
+                ClipboardMenu.Menu = new MenuBar(new[] {
                     new MenuBarItem ("_File", new[] {
                         new MenuItem ("_Log", "", ShowLiveLogging),
                         new MenuItem ("_Quit", "", Quit)
                     }),
+                    new MenuBarItem ("_Edit", new MenuItem [] {
+                        new MenuItem ("_Copy", "Ctrl+C", ClipboardMenu.Copy),
+                        new MenuItem ("C_ut", "Ctrl+X", ClipboardMenu.Cut),
+                        new MenuItem ("_Paste", "Ctrl+V", ClipboardMenu.Paste),
+                        new MenuItem ("Select _All", "Ctrl+A", ClipboardMenu.SelectAll)
+                    }),
                     new MenuBarItem ("_About", "", () =>  MessageBox.Query($"About {Strings.WindowTitle}", $"Version: {this.chatClientConfiguration.UserAgentName}", Strings.Ok))
                 });
             }
-           
 
-            this.menu.Width = Dim.Fill();
 
-            this.menu.ColorScheme = this.colorScheme;
+            ClipboardMenu.Menu.Width = Dim.Fill();
+
+            ClipboardMenu.Menu.ColorScheme = this.colorScheme;
         }
 
         void CreateStatusBar()

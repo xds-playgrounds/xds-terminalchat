@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using TextCopy;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.PortableImplementations;
 using XDS.Messaging.SDK.ApplicationBehavior.Workers;
@@ -113,6 +114,7 @@ namespace XDS.Messaging.TerminalChat.Services
                 }
 
                 ClearTemp();
+                ClipboardService.SetText("");
 
 
                 this.logger.LogInformation("Shutdown complete.");
@@ -123,14 +125,27 @@ namespace XDS.Messaging.TerminalChat.Services
                 this.logger.LogError(e.Message);
                 Environment.Exit(1);
             }
+        }
 
+        public string GetTempDir(bool createIfNotExists)
+        {
+            var exportDir = Path.Combine(this.DataDirRoot.Parent.FullName, "temp");
+
+            if (createIfNotExists)
+            {
+                if (!Directory.Exists(exportDir))
+                    Directory.CreateDirectory(exportDir);
+            }
+
+            return exportDir;
         }
 
         void ClearTemp()
         {
             try
             {
-                var exportDir = Path.Combine(this.DataDirRoot.Parent.FullName, "temp");
+                var exportDir = GetTempDir(false);
+
                 if (Directory.Exists(exportDir))
                     Directory.Delete(exportDir, true);
             }

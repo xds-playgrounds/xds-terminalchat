@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Terminal.Gui;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
@@ -21,6 +22,8 @@ namespace XDS.Messaging.TerminalChat.Dialogs
 
         internal void ShowModal()
         {
+            this.Dialog.Title = "Add Contact";
+
             var labelMessage = new Label("Please enter a name and the XDS ID of your contact.")
             {
                 X = Style.XLeftMargin,
@@ -57,7 +60,7 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 CanFocus = true
             };
 
-            this.labelError = new Label("")
+            this.labelError = new Label("                                                   ")
             {
                 X = Pos.Left(this.textFieldId),
                 Y = Pos.Bottom(this.textFieldId) + 1,
@@ -83,16 +86,14 @@ namespace XDS.Messaging.TerminalChat.Dialogs
 
             this.textFieldId.TextChanged = _ => ValidateIdAsync(false);
 
-            var dialog = new Dialog("Add Contact", 0, 0)
-            {
-                { labelMessage, labelName, textFieldName, labelId, this.textFieldId, this.labelError, buttonSave, buttonCancel }
-            };
-            dialog.ColorScheme = Application.Top.ColorScheme;
-            dialog.Ready = () =>
+            this.Dialog.Add(labelMessage, labelName, this.textFieldName, labelId, this.textFieldId, this.labelError, buttonSave, buttonCancel);
+
+            this.Dialog.Ready = () =>
             {
                 this.textFieldName.SetFocus();
             };
-            Application.Run(dialog);
+
+            Application.Run(this.Dialog);
         }
 
         async void ValidateIdAsync(bool saveIfValid)
