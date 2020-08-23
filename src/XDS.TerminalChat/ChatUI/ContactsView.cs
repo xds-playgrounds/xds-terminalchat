@@ -263,7 +263,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 return;
 
             var chatId = key.Split("|")[1].Trim();
-            Contact contactToEdit = this.contactListManager.Contacts.SingleOrDefault(x => x.ChatId == chatId);
+            Contact contactToEdit = this.contactListManager.Contacts.SingleOrDefault(x => x.StaticPublicKey != null ?  x.ChatId == chatId : x.UnverfiedId == chatId);
             this.contactsViewModel.ContactToEdit = contactToEdit;
 
             // for deleting
