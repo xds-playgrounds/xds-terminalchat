@@ -2,9 +2,11 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using TextCopy;
 using XDS.Messaging.SDK.ApplicationBehavior;
 using XDS.Messaging.SDK.ApplicationBehavior.Data;
@@ -104,8 +106,11 @@ namespace XDS.Messaging.TerminalChat
 
         static void AddRequiredServices(IServiceCollection services, DirectoryInfo dataDirRoot)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                services.AddLogging(loggingBuilder => { loggingBuilder.AddConsole(); });
+            else
+                services.AddLogging(loggingBuilder => { loggingBuilder.ClearProviders(); });
 
-            services.AddLogging(loggingBuilder => { loggingBuilder.AddConsole(); });
             services.InjectClipboard();
             services.AddSingleton(GetConfiguration());
             services.AddSingleton<ICancellation, Cancellation>();
