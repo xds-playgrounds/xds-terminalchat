@@ -36,7 +36,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         public override void Create()
         {
-            if (Console.CapsLock && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Console.CapsLock)
                 MessageBox.Query("Vault", "CAPS LOCK is set!", Strings.Ok);
 
             var labelWelcome = new Label("Welcome,") { X = 1, Y = 1 };
