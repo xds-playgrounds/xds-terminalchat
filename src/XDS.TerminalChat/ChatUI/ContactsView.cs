@@ -170,7 +170,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                         }
                     };
                     this.window.Add(buttonDeleteContact);
-                    this.contactsListView.SetFocus();
+                    //this.contactsListView.SetFocus();
                 }
 
                 var buttonEditProfile = new Button("Edit Profile")
