@@ -46,153 +46,154 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         public override async void Create()
         {
-            UnSubscribe();
             try
             {
+                UnSubscribe();
                 await InitializeModelAsync();
-            }
-            catch (Exception e)
-            {
-                await this.messageBoxService.ShowError(e);
-            }
 
-            while (!this.contactListManager._isInitialized) // hack, race condition
-            {
-                Thread.Sleep(100);
-
-            }
-            this.window.RemoveAll();
-
-            var maxContactNameLength = 0;
-            if (this.contactListManager.Contacts.Any())
-                maxContactNameLength = this.contactListManager.Contacts.Max(x => x.Name.Length);
-
-            var maxNameLength = Math.Max(this.profileViewModel.Name.Length, maxContactNameLength);
-
-            var profile = $"{this.profileViewModel.Name.PadRight(maxNameLength)} | {this.profileViewModel.ChatId.PadRight(14)} | Public Key: {this.profileViewModel.PublicKey.ToHexString()}";
-
-            var labelYourProfile = new Label("Your Profile:")
-            {
-                X = Style.XLeftMargin,
-                Y = Style.YTopMargin,
-                Width = Dim.Fill()
-            };
-
-            var labelProfile = new Label(profile)
-            {
-                X = Style.XLeftMargin,
-                Y = Pos.Bottom(labelYourProfile) + 1,
-                Width = Dim.Fill()
-            };
-
-            var count = this.contactListManager.Contacts.Count;
-
-            var contactsText = "You have added no contacts yet. You can already receive messages with your XDS ID.";
-            if (count == 1)
-                contactsText = "You have 1 contact.";
-            if (count > 1)
-                contactsText = $"You have {count} contacts:";
-
-
-            this.contactsCountLabel = new Label(contactsText)
-            {
-                X = Style.XLeftMargin,
-                Y = Pos.Bottom(labelProfile) + 2,
-                Width = Dim.Fill(),
-            };
-
-
-
-            List<string> items = CreateListViewItems(maxNameLength, this.contactListManager.Contacts);
-
-            this.contactsListView = new ListView(items)
-            {
-                X = Style.XLeftMargin,
-                Y = Pos.Bottom(this.contactsCountLabel) + 1,
-                Height = Dim.Fill(3),
-                Width = Dim.Fill()
-            };
-
-            this.contactsListView.OpenSelectedItem += OnListViewSelected; //(ListViewItemEventArgs e) => lbListView.Text = items[listview.SelectedItem];
-            this.window.Add(labelYourProfile, labelProfile, this.contactsCountLabel, this.contactsListView);
-
-            this.contactsListView.SelectedItemChanged += OnListViewSelectedChanged;
-
-            var buttonAddContact = new Button("Add Contact", true)
-            {
-                X = Style.XLeftMargin,
-                Y = Pos.Bottom(this.contactsListView) + 1,
-                Clicked = () =>
+                while (!this.contactListManager._isInitialized) // hack, race condition
                 {
-                    UnSubscribe();
-                    var addContactDialog = new AddContactDialog();
-                    addContactDialog.ShowModal();
-                    Create(); // refresh to load added contact
+                    Thread.Sleep(100);
+
                 }
-            };
-            this.window.Add(buttonAddContact);
+                this.window.RemoveAll();
 
-            if (count == 0)
-            {
-                while (!buttonAddContact.HasFocus)
+                var maxContactNameLength = 0;
+                if (this.contactListManager.Contacts.Any())
+                    maxContactNameLength = this.contactListManager.Contacts.Max(x => x.Name.Length);
+
+                var maxNameLength = Math.Max(this.profileViewModel.Name.Length, maxContactNameLength);
+
+                var profile = $"{this.profileViewModel.Name.PadRight(maxNameLength)} | {this.profileViewModel.ChatId.PadRight(14)} | Public Key: {this.profileViewModel.PublicKey.ToHexString()}";
+
+                var labelYourProfile = new Label("Your Profile:")
                 {
-                    this.window.FocusNext();
-                }
-            }
-            else
-            {
-                var buttonEditContact = new Button("Edit Contact")
+                    X = Style.XLeftMargin,
+                    Y = Style.YTopMargin,
+                    Width = Dim.Fill()
+                };
+
+                var labelProfile = new Label(profile)
                 {
-                    X = Pos.Right(buttonAddContact) + 3,
+                    X = Style.XLeftMargin,
+                    Y = Pos.Bottom(labelYourProfile) + 1,
+                    Width = Dim.Fill()
+                };
+
+                var count = this.contactListManager.Contacts.Count;
+
+                var contactsText = "You have added no contacts yet. You can already receive messages with your XDS ID.";
+                if (count == 1)
+                    contactsText = "You have 1 contact.";
+                if (count > 1)
+                    contactsText = $"You have {count} contacts:";
+
+
+                this.contactsCountLabel = new Label(contactsText)
+                {
+                    X = Style.XLeftMargin,
+                    Y = Pos.Bottom(labelProfile) + 2,
+                    Width = Dim.Fill(),
+                };
+
+
+
+                List<string> items = CreateListViewItems(maxNameLength, this.contactListManager.Contacts);
+
+                this.contactsListView = new ListView(items)
+                {
+                    X = Style.XLeftMargin,
+                    Y = Pos.Bottom(this.contactsCountLabel) + 1,
+                    Height = Dim.Fill(3),
+                    Width = Dim.Fill()
+                };
+
+                this.contactsListView.OpenSelectedItem += OnListViewSelected; //(ListViewItemEventArgs e) => lbListView.Text = items[listview.SelectedItem];
+                this.window.Add(labelYourProfile, labelProfile, this.contactsCountLabel, this.contactsListView);
+
+                this.contactsListView.SelectedItemChanged += OnListViewSelectedChanged;
+
+                var buttonAddContact = new Button("Add Contact", true)
+                {
+                    X = Style.XLeftMargin,
                     Y = Pos.Bottom(this.contactsListView) + 1,
                     Clicked = () =>
                     {
                         UnSubscribe();
-                        var editContactDialog = new EditContactDialog();
-                        editContactDialog.ShowModal();
+                        var addContactDialog = new AddContactDialog();
+                        addContactDialog.ShowModal();
                         Create(); // refresh to load added contact
                     }
                 };
-                this.window.Add(buttonEditContact);
+                this.window.Add(buttonAddContact);
 
-                var buttonDeleteContact = new Button("Delete Contact")
+                if (count == 0)
                 {
-                    X = Pos.Right(buttonEditContact) + 3,
+                    while (!buttonAddContact.HasFocus)
+                    {
+                        this.window.FocusNext();
+                    }
+                }
+                else
+                {
+                    var buttonEditContact = new Button("Edit Contact")
+                    {
+                        X = Pos.Right(buttonAddContact) + 3,
+                        Y = Pos.Bottom(this.contactsListView) + 1,
+                        Clicked = () =>
+                        {
+                            UnSubscribe();
+                            var editContactDialog = new EditContactDialog();
+                            editContactDialog.ShowModal();
+                            Create(); // refresh to load added contact
+                        }
+                    };
+                    this.window.Add(buttonEditContact);
+
+                    var buttonDeleteContact = new Button("Delete Contact")
+                    {
+                        X = Pos.Right(buttonEditContact) + 3,
+                        Y = Pos.Bottom(this.contactsListView) + 1,
+                        Clicked = () =>
+                        {
+                            if (MessageBox.Query("Delete Contact", $"Delete {this.contactsViewModel.ContactToEdit.Name} ({this.contactsViewModel.ContactToEdit.ChatId})?", "YES", "NO") == 0)
+                            {
+                                UnSubscribe();
+                                this.contactsViewModel.ExecuteDeleteCommand();
+                                Create(); // refresh to load added contact
+                            }
+                            else
+                            {
+                                return;
+                            }
+
+                        }
+                    };
+                    this.window.Add(buttonDeleteContact);
+                    this.contactsListView.SetFocus();
+                }
+
+                var buttonEditProfile = new Button("Edit Profile")
+                {
+                    X = Pos.Percent(85),
                     Y = Pos.Bottom(this.contactsListView) + 1,
                     Clicked = () =>
                     {
-                        if (MessageBox.Query("Delete Contact", $"Delete {this.contactsViewModel.ContactToEdit.Name} ({this.contactsViewModel.ContactToEdit.ChatId})?", "YES", "NO") == 0)
-                        {
-                            UnSubscribe();
-                            this.contactsViewModel.ExecuteDeleteCommand();
-                            Create(); // refresh to load added contact
-                        }
-                        else
-                        {
-                            return;
-                        }
-                       
+                        UnSubscribe();
+                        var addContactDialog = new EditProfileDialog();
+                        addContactDialog.ShowModal();
+                        Create(); // refresh to load added contact
                     }
                 };
-                this.window.Add(buttonDeleteContact);
-                this.contactsListView.SetFocus();
+                this.window.Add(buttonEditProfile);
+
+                Subscribe();
             }
-
-            var buttonEditProfile = new Button("Edit Profile")
+            catch (Exception e)
             {
-                X = Pos.Percent(85),
-                Y = Pos.Bottom(this.contactsListView) + 1,
-                Clicked = () =>
-                {
-                    UnSubscribe();
-                    var addContactDialog = new EditProfileDialog();
-                    addContactDialog.ShowModal();
-                    Create(); // refresh to load added contact
-                }
-            };
-            this.window.Add(buttonEditProfile);
-
-            Subscribe();
+                ErrorBox.Show(e.ToString());
+            }
+           
         }
 
         async Task InitializeModelAsync()
