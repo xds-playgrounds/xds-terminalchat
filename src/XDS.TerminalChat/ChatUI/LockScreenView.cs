@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Terminal.Gui;
@@ -35,7 +36,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         public override void Create()
         {
-            if (Console.CapsLock)
+            if (Console.CapsLock && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 MessageBox.Query("Vault", "CAPS LOCK is set!", Strings.Ok);
 
             var labelWelcome = new Label("Welcome,") { X = 1, Y = 1 };
@@ -80,7 +81,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 ErrorBox.Show("The passphrase is required.");
                 return;
             }
-                
+
 
             var op = new LongRunningOperation(p => { }, () => { });
             try
