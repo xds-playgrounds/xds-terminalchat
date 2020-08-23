@@ -1,5 +1,6 @@
 ﻿using System;
 using Terminal.Gui;
+using XDS.Messaging.SDK.ApplicationBehavior.Models.Chat;
 using XDS.Messaging.SDK.ApplicationBehavior.Services.Interfaces;
 using XDS.Messaging.SDK.ApplicationBehavior.ViewModels;
 using XDS.Messaging.TerminalChat.ChatUI;
@@ -23,6 +24,8 @@ namespace XDS.Messaging.TerminalChat.Dialogs
         {
             this.Dialog.Title = "Edit Contact";
 
+            Contact contactToEdit = this.contactsViewModel.ContactToEdit;
+
             var labelMessage = new Label("Edit the name of your contact.")
             {
                 X = Style.XLeftMargin,
@@ -36,7 +39,7 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 Y = Pos.Bottom(labelMessage) + 1
             };
 
-            this.textFieldName = new TextField(this.contactsViewModel.ContactToEdit.Name)
+            this.textFieldName = new TextField(contactToEdit.Name)
             {
                 X = Pos.Right(labelName) + 3,
                 Y = Pos.Top(labelName),
@@ -51,7 +54,7 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 Y = Pos.Bottom(textFieldName) + 1
             };
 
-            this.textFieldId = new TextField(this.contactsViewModel.ContactToEdit.ChatId)
+            this.textFieldId = new TextField(contactToEdit.StaticPublicKey != null ? contactToEdit.ChatId : contactToEdit.UnverfiedId)
             {
                 X = Pos.Right(labelId) + 1,
                 Y = Pos.Top(labelId),
@@ -65,8 +68,8 @@ namespace XDS.Messaging.TerminalChat.Dialogs
                 Y = Pos.Bottom(this.textFieldId) + 1,
                 Width = Dim.Fill()
             };
-            if (!string.IsNullOrEmpty(this.contactsViewModel.ContactToEdit.Name))
-                this.textFieldName.CursorPosition = this.contactsViewModel.ContactToEdit.Name.Length;
+            if (!string.IsNullOrEmpty(contactToEdit.Name))
+                this.textFieldName.CursorPosition = contactToEdit.Name.Length;
             this.textFieldName.PositionCursor();
 
             var buttonSave = new Button("Save")
