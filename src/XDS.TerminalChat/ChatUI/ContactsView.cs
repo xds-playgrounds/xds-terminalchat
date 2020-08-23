@@ -156,6 +156,9 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                         Y = Pos.Bottom(this.contactsListView) + 1,
                         Clicked = () =>
                         {
+                            if(this.contactsViewModel.ContactToEdit == null)
+                                return;
+                            
                             if (MessageBox.Query("Delete Contact", $"Delete {this.contactsViewModel.ContactToEdit.Name} ({this.contactsViewModel.ContactToEdit.ChatId ?? this.contactsViewModel.ContactToEdit.UnverfiedId ?? "null"})?", "YES", "NO") == 0)
                             {
                                 UnSubscribe();
