@@ -41,7 +41,6 @@ namespace XDS.Messaging.TerminalChat
 
         public static void ShowUI()
         {
-            Application.UseSystemConsole = true;
             Application.Init();
             
             var topLevel = Application.Top;
