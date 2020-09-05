@@ -14,4 +14,8 @@ If you cloned without --recursive, to get the submodules, but only at the first 
 For further updating, there is also:
 
     git submodule update --recursive     or    git pull --recurse-submodules
+
+Publish as one file:
+    
+     dotnet publish -c Release /p:PublishSingleFile=true --self-contained --runtime linux-x64 --output /home
     

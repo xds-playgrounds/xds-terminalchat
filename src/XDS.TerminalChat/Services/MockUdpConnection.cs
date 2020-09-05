@@ -10,19 +10,19 @@ namespace XDS.Messaging.TerminalChat.Services
     {
         public bool IsConnected => throw new NotImplementedException();
 
-        public Task<bool> ConnectAsync(string remoteDnsHost, int remotePort, Func<byte[], Transport, Task<string>> receiver = null)
+        public async Task<bool> ConnectAsync(string remoteDnsHost, int remotePort, Func<byte[], Transport, Task<string>> receiver = null)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public Task DisconnectAsync()
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
-        public Task<List<IEnvelope>> SendRequestAsync(byte[] request)
+        public async Task<List<IEnvelope>> SendRequestAsync(byte[] request)
         {
-            throw new NotImplementedException();
+            return new List<IEnvelope>();
         }
     }
 }
