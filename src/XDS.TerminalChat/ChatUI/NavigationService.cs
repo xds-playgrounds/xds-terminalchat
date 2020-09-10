@@ -18,6 +18,8 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         static Action _showSelf;
 
+        static ConsoleViewBase _currentView;
+
         internal static void Init(Window window, StatusBar statusBar, MenuBar menuBar)
         {
             _mainWindow = window;
@@ -49,42 +51,66 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         #endregion
 
+        #region cleanup
+
+        static void StopCurrentView()
+        {
+            if(_currentView != null)
+                _currentView.Stop();
+        }
+        #endregion
+
         #region app screens
 
         public static void ShowLockScreen()
         {
+            StopCurrentView();
             SetMinimumStatusBar();
 
-            var unlockView = new LockScreenView(_mainWindow);
-            unlockView.Create();
+            _currentView = new LockScreenView(_mainWindow);
+            _currentView.Create();
         }
 
         internal static void ShowContactsView()
         {
+            StopCurrentView();
             SetContactsViewStatusBar();
 
-            var contactsView = new ContactsView(_mainWindow);
-            contactsView.Create();
+            _currentView = new ContactsView(_mainWindow);
+            _currentView.Create();
 
             PushHistory(ShowContactsView);
         }
 
+        internal static void ShowGroupsView()
+        {
+            StopCurrentView();
+            SetGroupsStatusBar();
+
+            _currentView = new GroupsView(_mainWindow);
+            _currentView.Create();
+
+            PushHistory(ShowGroupsView);
+        }
+
         internal static void ShowChatView()
         {
+            StopCurrentView();
             SetChatStatusBar();
 
-            var chatView = new ChatView(_mainWindow);
-            chatView.Create();
+            _currentView = new ChatView(_mainWindow);
+            _currentView.Create();
 
             PushHistory(ShowChatView);
         }
 
         internal static void ShowWalletView()
         {
+            StopCurrentView();
             SetWalletStatusBar();
 
-            var walletView = new WalletView(_mainWindow);
-            walletView.Create();
+            _currentView = new WalletView(_mainWindow);
+            _currentView.Create();
 
             PushHistory(ShowWalletView);
         }
@@ -135,6 +161,18 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             };
         }
 
+        static void SetGroupsStatusBar()
+        {
+            _statusBar.RemoveAll();
+            _statusBar.Items = new[]
+            {
+                new StatusItem(Key.ControlQ, "~^Q~ Quit", HotKeys.OnQuitPressed),
+                new StatusItem(Key.ControlK, "~^K~ Kill Switch", () => { HotKeys.OnKillPressed?.Invoke(); }),
+                new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
+                new StatusItem(Key.ControlB, "~^B~ Back", () => { HotKeys.OnBackPress?.Invoke(); }),
+            };
+        }
+
         static void SetChatStatusBar()
         {
             _statusBar.RemoveAll();
@@ -157,6 +195,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 new StatusItem(Key.ControlQ, "~^Q~ Quit", HotKeys.OnQuitPressed),
                 new StatusItem(Key.ControlK, "~^K~ Kill Switch", () => { HotKeys.OnKillPressed?.Invoke(); }),
                 new StatusItem(Key.ControlW, "~^W~ Wallet", () => { NavigationService.ShowWalletView(); }),
+                new StatusItem(Key.ControlG, "~^G~ Groups", () => { NavigationService.ShowGroupsView(); }),
                 new StatusItem(Key.Unknown, GetCurrentUtcDateStringInvariant(), () => { }),
             };
         }
@@ -184,7 +223,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             });
         }
 
-       
+
 
         #endregion
     }

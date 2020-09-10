@@ -16,7 +16,7 @@ using XDS.SDK.Messaging.CrossTierTypes.Photon;
 
 namespace XDS.Messaging.TerminalChat.ChatUI
 {
-    public class ContactsView : ConsoleViewBase
+    public class GroupsView : ConsoleViewBase
     {
         readonly ContactListManager contactListManager;
         readonly ContactsViewModel contactsViewModel;
@@ -32,7 +32,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
         readonly Window window;
 
-        public ContactsView(Window mainWindow) : base(mainWindow)
+        public GroupsView(Window mainWindow) : base(mainWindow)
         {
             this.window = mainWindow;
 
@@ -49,7 +49,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
             try
             {
                 UnSubscribe();
-                await InitializeModelAsync();
+                //await InitializeModelAsync();
 
                 while (!this.contactListManager._isInitialized) // hack, race condition
                 {
@@ -80,13 +80,13 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                     Width = Dim.Fill()
                 };
 
-                var count = this.contactListManager.Contacts.Count;
+                var count = 0; //this.contactListManager.Contacts.Count;
 
-                var contactsText = "You have added no contacts yet. You can already receive messages with your XDS ID.";
+                var contactsText = "You do not manage any groups yet.";
                 if (count == 1)
-                    contactsText = "You have 1 contact.";
+                    contactsText = "You manage 1 group.";
                 if (count > 1)
-                    contactsText = $"You have {count} contacts:";
+                    contactsText = $"You manage {count} groups:";
 
 
                 this.contactsCountLabel = new Label(contactsText)
@@ -98,7 +98,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
 
 
-                List<string> items = CreateListViewItems(maxNameLength, this.contactListManager.Contacts);
+                List<string> items = new List<string>(); //CreateListViewItems(maxNameLength, this.contactListManager.Contacts);
 
                 this.contactsListView = new ListView(items)
                 {
@@ -113,7 +113,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
 
                 this.contactsListView.SelectedItemChanged += OnListViewSelectedChanged;
 
-                var buttonAddContact = new Button("Add Contact", true)
+                var buttonAddContact = new Button("Add Group", true)
                 {
                     X = Style.XLeftMargin,
                     Y = Pos.Bottom(this.contactsListView) + 1,
@@ -136,7 +136,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                 }
                 else
                 {
-                    var buttonEditContact = new Button("Edit Contact")
+                    var buttonEditContact = new Button("Edit Group")
                     {
                         X = Pos.Right(buttonAddContact) + 3,
                         Y = Pos.Bottom(this.contactsListView) + 1,
@@ -150,7 +150,7 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                     };
                     this.window.Add(buttonEditContact);
 
-                    var buttonDeleteContact = new Button("Delete Contact")
+                    var buttonDeleteContact = new Button("Delete Group")
                     {
                         X = Pos.Right(buttonEditContact) + 3,
                         Y = Pos.Bottom(this.contactsListView) + 1,
@@ -176,19 +176,19 @@ namespace XDS.Messaging.TerminalChat.ChatUI
                     this.contactsListView.SetFocus();
                 }
 
-                var buttonEditProfile = new Button("Edit Profile")
+                var newGroupButton = new Button("New Group")
                 {
                     X = Pos.Percent(85),
                     Y = Pos.Bottom(this.contactsListView) + 1,
                     Clicked = () =>
                     {
                         UnSubscribe();
-                        var addContactDialog = new EditProfileDialog();
-                        addContactDialog.ShowModal();
+                        var newGroupDialog = new NewGroupDialog();
+                        newGroupDialog.ShowModal();
                         Create(); // refresh to load added contact
                     }
                 };
-                this.window.Add(buttonEditProfile);
+                this.window.Add(newGroupButton);
 
                 Subscribe();
             }
@@ -199,11 +199,11 @@ namespace XDS.Messaging.TerminalChat.ChatUI
            
         }
 
-        async Task InitializeModelAsync()
-        {
-            await this.contactListManager.InitFromStore();
-            await this.contactListManager.UpdateContacts(); // this would insert the contact twice in the conversations list, investigate
-        }
+        //async Task InitializeModelAsync()
+        //{
+        //    await this.contactListManager.InitFromStore();
+        //    await this.contactListManager.UpdateContacts(); // this would insert the contact twice in the conversations list, investigate
+        //}
 
         void OnListViewSelected(ListViewItemEventArgs e)
         {
